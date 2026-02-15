@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use crate::diff_render::display_path_for;
+use crate::i18n::tr;
 use crate::key_hint;
 use crate::text_formatting::truncate_text;
 use crate::tui::FrameRequester;
@@ -56,8 +57,8 @@ pub enum SessionPickerAction {
 impl SessionPickerAction {
     fn title(self) -> &'static str {
         match self {
-            SessionPickerAction::Resume => "Resume a previous session",
-            SessionPickerAction::Fork => "Fork a previous session",
+            SessionPickerAction::Resume => tr("Resume a previous session", "恢复之前的会话"),
+            SessionPickerAction::Fork => tr("Fork a previous session", "从之前的会话分叉"),
         }
     }
 
@@ -221,8 +222,8 @@ async fn run_session_picker(
 /// Returns the human-readable column header for the given sort key.
 fn sort_key_label(sort_key: ThreadSortKey) -> &'static str {
     match sort_key {
-        ThreadSortKey::CreatedAt => "Created at",
-        ThreadSortKey::UpdatedAt => "Updated at",
+        ThreadSortKey::CreatedAt => tr("Created at", "创建时间"),
+        ThreadSortKey::UpdatedAt => tr("Updated at", "更新时间"),
     }
 }
 
@@ -809,7 +810,7 @@ fn head_to_row(item: &ThreadItem) -> Row {
         .map(str::trim)
         .filter(|s| !s.is_empty())
         .map(str::to_string)
-        .unwrap_or_else(|| String::from("(no message yet)"));
+        .unwrap_or_else(|| tr("(no message yet)", "（暂无消息）").to_string());
 
     Row {
         path: item.path.clone(),
@@ -866,9 +867,9 @@ fn draw_picker(tui: &mut Tui, state: &PickerState) -> std::io::Result<()> {
 
         // Search line
         let q = if state.query.is_empty() {
-            "Type to search".dim().to_string()
+            tr("Type to search", "输入以搜索").dim().to_string()
         } else {
-            format!("Search: {}", state.query)
+            format!("{}: {}", tr("Search", "搜索"), state.query)
         };
         frame.render_widget_ref(Line::from(q), search);
 
@@ -1213,8 +1214,8 @@ fn calculate_column_metrics(rows: &[Row], include_cwd: bool) -> ColumnMetrics {
     }
 
     let mut labels: Vec<(String, String, String, String)> = Vec::with_capacity(rows.len());
-    let mut max_created_width = UnicodeWidthStr::width("Created at");
-    let mut max_updated_width = UnicodeWidthStr::width("Updated at");
+    let mut max_created_width = UnicodeWidthStr::width(tr("Created at", "创建时间"));
+    let mut max_updated_width = UnicodeWidthStr::width(tr("Updated at", "更新时间"));
     let mut max_branch_width = UnicodeWidthStr::width("Branch");
     let mut max_cwd_width = if include_cwd {
         UnicodeWidthStr::width("CWD")

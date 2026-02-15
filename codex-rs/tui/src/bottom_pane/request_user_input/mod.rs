@@ -28,6 +28,7 @@ use crate::bottom_pane::scroll_state::ScrollState;
 use crate::bottom_pane::selection_popup_common::GenericDisplayRow;
 use crate::bottom_pane::selection_popup_common::measure_rows_height;
 use crate::history_cell;
+use crate::i18n::tr;
 use crate::render::renderable::Renderable;
 
 use codex_core::protocol::Op;
@@ -38,20 +39,31 @@ use codex_protocol::user_input::TextElement;
 use unicode_width::UnicodeWidthStr;
 
 const NOTES_PLACEHOLDER: &str = "Add notes";
+const NOTES_PLACEHOLDER_ZH_CN: &str = "添加备注";
 const ANSWER_PLACEHOLDER: &str = "Type your answer (optional)";
+const ANSWER_PLACEHOLDER_ZH_CN: &str = "输入你的回答（可选）";
 // Keep in sync with ChatComposer's minimum composer height.
 const MIN_COMPOSER_HEIGHT: u16 = 3;
 const SELECT_OPTION_PLACEHOLDER: &str = "Select an option to add notes";
+const SELECT_OPTION_PLACEHOLDER_ZH_CN: &str = "先选择一个选项再添加备注";
 pub(super) const TIP_SEPARATOR: &str = " | ";
 pub(super) const DESIRED_SPACERS_BETWEEN_SECTIONS: u16 = 2;
 const OTHER_OPTION_LABEL: &str = "None of the above";
+const OTHER_OPTION_LABEL_ZH_CN: &str = "以上都不是";
 const OTHER_OPTION_DESCRIPTION: &str = "Optionally, add details in notes (tab).";
+const OTHER_OPTION_DESCRIPTION_ZH_CN: &str = "可选：在备注中补充细节（Tab）。";
 const UNANSWERED_CONFIRM_TITLE: &str = "Submit with unanswered questions?";
+const UNANSWERED_CONFIRM_TITLE_ZH_CN: &str = "仍有未回答问题，是否提交？";
 const UNANSWERED_CONFIRM_GO_BACK: &str = "Go back";
+const UNANSWERED_CONFIRM_GO_BACK_ZH_CN: &str = "返回";
 const UNANSWERED_CONFIRM_GO_BACK_DESC: &str = "Return to the first unanswered question.";
+const UNANSWERED_CONFIRM_GO_BACK_DESC_ZH_CN: &str = "返回到第一个未回答的问题。";
 const UNANSWERED_CONFIRM_SUBMIT: &str = "Proceed";
+const UNANSWERED_CONFIRM_SUBMIT_ZH_CN: &str = "继续提交";
 const UNANSWERED_CONFIRM_SUBMIT_DESC_SINGULAR: &str = "question";
+const UNANSWERED_CONFIRM_SUBMIT_DESC_SINGULAR_ZH_CN: &str = "个问题";
 const UNANSWERED_CONFIRM_SUBMIT_DESC_PLURAL: &str = "questions";
+const UNANSWERED_CONFIRM_SUBMIT_DESC_PLURAL_ZH_CN: &str = "个问题";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Focus {
@@ -149,7 +161,7 @@ impl RequestUserInputOverlay {
             has_input_focus,
             app_event_tx.clone(),
             enhanced_keys_supported,
-            ANSWER_PLACEHOLDER.to_string(),
+            tr(ANSWER_PLACEHOLDER, ANSWER_PLACEHOLDER_ZH_CN).to_string(),
             disable_paste_burst,
             ChatComposerConfig::plain_text(),
         );
@@ -299,8 +311,14 @@ impl RequestUserInputOverlay {
                     let prefix_label = format!("{prefix} {number}. ");
                     let wrap_indent = UnicodeWidthStr::width(prefix_label.as_str());
                     rows.push(GenericDisplayRow {
-                        name: format!("{prefix_label}{OTHER_OPTION_LABEL}"),
-                        description: Some(OTHER_OPTION_DESCRIPTION.to_string()),
+                        name: format!(
+                            "{prefix_label}{}",
+                            tr(OTHER_OPTION_LABEL, OTHER_OPTION_LABEL_ZH_CN)
+                        ),
+                        description: Some(
+                            tr(OTHER_OPTION_DESCRIPTION, OTHER_OPTION_DESCRIPTION_ZH_CN)
+                                .to_string(),
+                        ),
                         wrap_indent: Some(wrap_indent),
                         ..Default::default()
                     });
@@ -400,11 +418,11 @@ impl RequestUserInputOverlay {
 
     fn notes_placeholder(&self) -> &'static str {
         if self.has_options() && self.selected_option_index().is_none() {
-            SELECT_OPTION_PLACEHOLDER
+            tr(SELECT_OPTION_PLACEHOLDER, SELECT_OPTION_PLACEHOLDER_ZH_CN)
         } else if self.has_options() {
-            NOTES_PLACEHOLDER
+            tr(NOTES_PLACEHOLDER, NOTES_PLACEHOLDER_ZH_CN)
         } else {
-            ANSWER_PLACEHOLDER
+            tr(ANSWER_PLACEHOLDER, ANSWER_PLACEHOLDER_ZH_CN)
         }
     }
 
@@ -431,32 +449,41 @@ impl RequestUserInputOverlay {
         let notes_visible = self.notes_ui_visible();
         if self.has_options() {
             if self.selected_option_index().is_some() && !notes_visible {
-                tips.push(FooterTip::highlighted("tab to add notes"));
+                tips.push(FooterTip::highlighted(tr("tab to add notes", "tab 添加备注")));
             }
             if self.selected_option_index().is_some() && notes_visible {
-                tips.push(FooterTip::new("tab or esc to clear notes"));
+                tips.push(FooterTip::new(tr(
+                    "tab or esc to clear notes",
+                    "tab 或 esc 清除备注",
+                )));
             }
         }
 
         let question_count = self.question_count();
         let is_last_question = self.current_index().saturating_add(1) >= question_count;
         let enter_tip = if question_count == 1 {
-            FooterTip::highlighted("enter to submit answer")
+            FooterTip::highlighted(tr("enter to submit answer", "回车提交答案"))
         } else if is_last_question {
-            FooterTip::highlighted("enter to submit all")
+            FooterTip::highlighted(tr("enter to submit all", "回车提交全部"))
         } else {
-            FooterTip::new("enter to submit answer")
+            FooterTip::new(tr("enter to submit answer", "回车提交答案"))
         };
         tips.push(enter_tip);
         if question_count > 1 {
             if self.has_options() && !self.focus_is_notes() {
-                tips.push(FooterTip::new("←/→ to navigate questions"));
+                tips.push(FooterTip::new(tr(
+                    "←/→ to navigate questions",
+                    "←/→ 切换问题",
+                )));
             } else if !self.has_options() {
-                tips.push(FooterTip::new("ctrl + p / ctrl + n change question"));
+                tips.push(FooterTip::new(tr(
+                    "ctrl + p / ctrl + n change question",
+                    "ctrl + p / ctrl + n 切换问题",
+                )));
             }
         }
         if !(self.has_options() && notes_visible) {
-            tips.push(FooterTip::new("esc to interrupt"));
+            tips.push(FooterTip::new(tr("esc to interrupt", "esc 中断")));
         }
         tips
     }
@@ -607,7 +634,7 @@ impl RequestUserInputOverlay {
             return options.get(idx).map(|opt| opt.label.clone());
         }
         if idx == options.len() && Self::other_option_enabled_for_question(question) {
-            return Some(OTHER_OPTION_LABEL.to_string());
+            return Some(tr(OTHER_OPTION_LABEL, OTHER_OPTION_LABEL_ZH_CN).to_string());
         }
         None
     }
@@ -786,11 +813,23 @@ impl RequestUserInputOverlay {
     fn unanswered_submit_description(&self) -> String {
         let count = self.unanswered_question_count();
         let suffix = if count == 1 {
-            UNANSWERED_CONFIRM_SUBMIT_DESC_SINGULAR
+            tr(
+                UNANSWERED_CONFIRM_SUBMIT_DESC_SINGULAR,
+                UNANSWERED_CONFIRM_SUBMIT_DESC_SINGULAR_ZH_CN,
+            )
         } else {
-            UNANSWERED_CONFIRM_SUBMIT_DESC_PLURAL
+            tr(
+                UNANSWERED_CONFIRM_SUBMIT_DESC_PLURAL,
+                UNANSWERED_CONFIRM_SUBMIT_DESC_PLURAL_ZH_CN,
+            )
         };
-        format!("Submit with {count} unanswered {suffix}.")
+        if suffix == UNANSWERED_CONFIRM_SUBMIT_DESC_SINGULAR_ZH_CN
+            || suffix == UNANSWERED_CONFIRM_SUBMIT_DESC_PLURAL_ZH_CN
+        {
+            format!("仍有 {count} {suffix}未回答。")
+        } else {
+            format!("Submit with {count} unanswered {suffix}.")
+        }
     }
 
     fn first_unanswered_index(&self) -> Option<usize> {
@@ -811,12 +850,16 @@ impl RequestUserInputOverlay {
             .unwrap_or(0);
         let entries = [
             (
-                UNANSWERED_CONFIRM_SUBMIT,
+                tr(UNANSWERED_CONFIRM_SUBMIT, UNANSWERED_CONFIRM_SUBMIT_ZH_CN),
                 self.unanswered_submit_description(),
             ),
             (
-                UNANSWERED_CONFIRM_GO_BACK,
-                UNANSWERED_CONFIRM_GO_BACK_DESC.to_string(),
+                tr(UNANSWERED_CONFIRM_GO_BACK, UNANSWERED_CONFIRM_GO_BACK_ZH_CN),
+                tr(
+                    UNANSWERED_CONFIRM_GO_BACK_DESC,
+                    UNANSWERED_CONFIRM_GO_BACK_DESC_ZH_CN,
+                )
+                .to_string(),
             ),
         ];
         entries

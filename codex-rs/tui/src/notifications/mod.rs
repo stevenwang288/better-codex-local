@@ -38,7 +38,11 @@ impl DesktopNotificationBackend {
 
     pub fn notify(&mut self, message: &str) -> io::Result<()> {
         match self {
-            DesktopNotificationBackend::Osc9(backend) => backend.notify(message),
+            DesktopNotificationBackend::Osc9(backend) => {
+                backend.notify(message)?;
+                let mut bel = BelBackend;
+                bel.notify("")
+            }
             DesktopNotificationBackend::Bel(backend) => backend.notify(message),
         }
     }
@@ -50,7 +54,7 @@ pub fn detect_backend(method: NotificationMethod) -> DesktopNotificationBackend 
 
 fn supports_osc9() -> bool {
     if env::var_os("WT_SESSION").is_some() {
-        return false;
+        return true;
     }
     // Prefer TERM_PROGRAM when present, but keep fallbacks for shells/launchers
     // that don't set it (e.g., tmux/ssh) to avoid regressing OSC 9 support.

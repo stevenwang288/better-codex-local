@@ -1,4 +1,5 @@
 use crate::history_cell::PlainHistoryCell;
+use crate::i18n::tr;
 use codex_app_server_protocol::ConfigLayerSource;
 use codex_core::config::Config;
 use codex_core::config_loader::ConfigLayerEntry;
@@ -22,8 +23,8 @@ pub(crate) fn new_debug_config_output(
 
     if let Some(proxy) = session_network_proxy {
         lines.push("".into());
-        lines.push("Session runtime:".bold().into());
-        lines.push("  - network_proxy".into());
+        lines.push(tr("Session runtime:", "会话运行时：").bold().into());
+        lines.push(tr("  - network_proxy", "  - network_proxy").into());
         let SessionNetworkProxyRuntime {
             http_addr,
             socks_addr,
@@ -58,13 +59,16 @@ fn render_debug_config_lines(stack: &ConfigLayerStack) -> Vec<Line<'static>> {
     let mut lines = vec!["/debug-config".magenta().into(), "".into()];
 
     lines.push(
-        "Config layer stack (lowest precedence first):"
-            .bold()
-            .into(),
+        tr(
+            "Config layer stack (lowest precedence first):",
+            "配置层栈（优先级从低到高）：",
+        )
+        .bold()
+        .into(),
     );
     let layers = stack.get_layers(ConfigLayerStackOrdering::LowestPrecedenceFirst, true);
     if layers.is_empty() {
-        lines.push("  <none>".dim().into());
+        lines.push(tr("  <none>", "  <无>").dim().into());
     } else {
         for (index, layer) in layers.iter().enumerate() {
             let source = format_config_layer_source(&layer.name);
@@ -85,7 +89,7 @@ fn render_debug_config_lines(stack: &ConfigLayerStack) -> Vec<Line<'static>> {
     let requirements_toml = stack.requirements_toml();
 
     lines.push("".into());
-    lines.push("Requirements:".bold().into());
+    lines.push(tr("Requirements:", "约束要求：").bold().into());
     let mut requirement_lines = Vec::new();
 
     if let Some(policies) = requirements_toml.allowed_approval_policies.as_ref() {
@@ -165,7 +169,7 @@ fn render_debug_config_lines(stack: &ConfigLayerStack) -> Vec<Line<'static>> {
     }
 
     if requirement_lines.is_empty() {
-        lines.push("  <none>".dim().into());
+        lines.push(tr("  <none>", "  <无>").dim().into());
     } else {
         lines.extend(requirement_lines);
     }
@@ -302,7 +306,7 @@ fn format_config_layer_source(source: &ConfigLayerSource) -> String {
             format!("legacy managed_config.toml ({})", file.as_path().display())
         }
         ConfigLayerSource::LegacyManagedConfigTomlFromMdm => {
-            "legacy managed_config.toml (MDM)".to_string()
+            tr("legacy managed_config.toml (MDM)", "旧版 managed_config.toml（MDM）").to_string()
         }
     }
 }

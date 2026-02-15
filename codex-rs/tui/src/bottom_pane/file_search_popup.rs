@@ -5,6 +5,7 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::widgets::WidgetRef;
 
+use crate::i18n::tr;
 use crate::render::Insets;
 use crate::render::RectExt;
 
@@ -134,9 +135,9 @@ impl WidgetRef for &FileSearchPopup {
         };
 
         let empty_message = if self.waiting {
-            "loading..."
+            tr("loading...", "加载中...")
         } else {
-            "no matches"
+            tr("no matches", "无匹配项")
         };
 
         render_rows(

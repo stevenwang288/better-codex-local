@@ -7,6 +7,7 @@ use super::scroll_state::ScrollState;
 use super::selection_popup_common::GenericDisplayRow;
 use super::selection_popup_common::render_rows;
 use super::slash_commands;
+use crate::i18n::tr;
 use crate::render::Insets;
 use crate::render::RectExt;
 use crate::slash_command::SlashCommand;
@@ -208,7 +209,7 @@ impl CommandPopup {
                         let description = prompt
                             .description
                             .clone()
-                            .unwrap_or_else(|| "send saved prompt".to_string());
+                            .unwrap_or_else(|| tr("send saved prompt", "发送已保存提示词").to_string());
                         (
                             format!("/{PROMPTS_CMD_PREFIX}:{}", prompt.name),
                             description,
@@ -262,7 +263,7 @@ impl WidgetRef for CommandPopup {
             &rows,
             &self.state,
             MAX_POPUP_ROWS,
-            "no matches",
+            tr("no matches", "无匹配项"),
         );
     }
 }

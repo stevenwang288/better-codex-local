@@ -1,3 +1,5 @@
+use crate::i18n::tr;
+use crate::i18n::use_zh_cn;
 use codex_core::features::FEATURES;
 use codex_protocol::account::PlanType;
 use lazy_static::lazy_static;
@@ -63,27 +65,42 @@ pub(crate) fn get_tooltip(plan: Option<PlanType>) -> Option<String> {
             | Some(PlanType::Enterprise)
             | Some(PlanType::Pro) => {
                 let tooltip = if IS_MACOS {
-                    PAID_TOOLTIP
+                    tr(
+                        PAID_TOOLTIP,
+                        "*新功能* 在 *4 月 2 日* 前可体验 **Codex App**（速率上限 2 倍）。运行 `codex app` 或访问 https://chatgpt.com/codex?app-landing-page=true",
+                    )
                 } else {
-                    PAID_TOOLTIP_NON_MAC
+                    tr(
+                        PAID_TOOLTIP_NON_MAC,
+                        "*新功能* 在 *4 月 2 日* 前享受 2 倍速率上限。",
+                    )
                 };
                 return Some(tooltip.to_string());
             }
             Some(PlanType::Go) | Some(PlanType::Free) => {
-                return Some(FREE_GO_TOOLTIP.to_string());
+                return Some(
+                    tr(
+                        FREE_GO_TOOLTIP,
+                        "*新功能* 在 *3 月 2 日* 前，Codex 已免费包含在你的套餐中，一起构建吧。",
+                    )
+                    .to_string(),
+                );
             }
             _ => {
                 let tooltip = if IS_MACOS {
-                    OTHER_TOOLTIP
+                    tr(
+                        OTHER_TOOLTIP,
+                        "*新功能* 用 **Codex App** 更快构建。运行 `codex app` 或访问 https://chatgpt.com/codex?app-landing-page=true",
+                    )
                 } else {
-                    OTHER_TOOLTIP_NON_MAC
+                    tr(OTHER_TOOLTIP_NON_MAC, "*新功能* 用 Codex 更快构建。")
                 };
                 return Some(tooltip.to_string());
             }
         }
     }
 
-    pick_tooltip(&mut rng).map(str::to_string)
+    pick_tooltip(&mut rng).map(localize_tooltip)
 }
 
 fn pick_tooltip<R: Rng + ?Sized>(rng: &mut R) -> Option<&'static str> {
@@ -93,6 +110,85 @@ fn pick_tooltip<R: Rng + ?Sized>(rng: &mut R) -> Option<&'static str> {
         ALL_TOOLTIPS
             .get(rng.random_range(0..ALL_TOOLTIPS.len()))
             .copied()
+    }
+}
+
+fn localize_tooltip(tip: &str) -> String {
+    if !use_zh_cn() {
+        return tip.to_string();
+    }
+
+    match tip {
+        "Use /compact when the conversation gets long to summarize history and free up context." => {
+            "当对话变长时，使用 /compact 总结历史并释放上下文。".to_string()
+        }
+        "Start a fresh idea with /new; the previous session stays in history." => {
+            "用 /new 开启新话题；上一会话会保留在历史中。".to_string()
+        }
+        "Use /feedback to send logs to the maintainers when something looks off." => {
+            "出现异常时，用 /feedback 把日志发给维护者。".to_string()
+        }
+        "Switch models or reasoning effort quickly with /model." => {
+            "用 /model 可快速切换模型或推理强度。".to_string()
+        }
+        "Use /permissions to control when Codex asks for confirmation." => {
+            "用 /permissions 控制 Codex 何时请求确认。".to_string()
+        }
+        "Run /review to get a code review of your current changes." => {
+            "运行 /review 获取当前改动的代码审查。".to_string()
+        }
+        "Use /skills to list available skills or ask Codex to use one." => {
+            "用 /skills 查看可用技能，或让 Codex 使用某个技能。".to_string()
+        }
+        "Use /status to see the current model, approvals, and token usage." => {
+            "用 /status 查看当前模型、审批策略和 Token 使用情况。".to_string()
+        }
+        "Use /fork to branch the current chat into a new thread." => {
+            "用 /fork 将当前聊天分叉为新线程。".to_string()
+        }
+        "Use /init to create an AGENTS.md with project-specific guidance." => {
+            "用 /init 创建带项目指引的 AGENTS.md。".to_string()
+        }
+        "Use /mcp to list configured MCP tools." => {
+            "用 /mcp 查看已配置的 MCP 工具。".to_string()
+        }
+        "Run `codex app` to open Codex Desktop (it installs on macOS if needed)." => {
+            "运行 `codex app` 打开 Codex 桌面端（macOS 缺失时会自动安装）。".to_string()
+        }
+        "Use /personality to customize how Codex communicates." => {
+            "用 /personality 自定义 Codex 的沟通风格。".to_string()
+        }
+        "Use /rename to rename your threads for easier thread resuming." => {
+            "用 /rename 重命名线程，便于后续恢复。".to_string()
+        }
+        "Use the OpenAI docs MCP for API questions; enable it with `codex mcp add openaiDeveloperDocs --url https://developers.openai.com/mcp`." => {
+            "遇到 API 问题可用 OpenAI Docs MCP；可通过 `codex mcp add openaiDeveloperDocs --url https://developers.openai.com/mcp` 启用。".to_string()
+        }
+        "Join the OpenAI community Discord: http://discord.gg/openai" => {
+            "加入 OpenAI 社区 Discord：http://discord.gg/openai".to_string()
+        }
+        "Visit the Codex community forum: https://community.openai.com/c/codex/37" => {
+            "访问 Codex 社区论坛：https://community.openai.com/c/codex/37".to_string()
+        }
+        "You can run any shell command from Codex using `!` (e.g. `!ls`)" => {
+            "你可以在 Codex 中用 `!` 运行任意 shell 命令（例如 `!ls`）。".to_string()
+        }
+        "Type / to open the command popup; Tab autocompletes slash commands." => {
+            "输入 / 打开命令弹窗；Tab 可自动补全斜杠命令。".to_string()
+        }
+        "When the composer is empty, press Esc to step back and edit your last message; Enter confirms." => {
+            "当输入框为空时，按 Esc 可回退并编辑上一条消息；Enter 确认。".to_string()
+        }
+        "Press Tab to queue a message when a task is running; otherwise it sends immediately (except `!`)." => {
+            "任务运行中按 Tab 可将消息入队；否则会立即发送（`!` 例外）。".to_string()
+        }
+        "Paste an image with Ctrl+V to attach it to your next message." => {
+            "按 Ctrl+V 粘贴图片，可将其附加到下一条消息。".to_string()
+        }
+        "You can resume a previous conversation by running `codex resume`" => {
+            "运行 `codex resume` 可恢复之前的对话。".to_string()
+        }
+        _ => tip.to_string(),
     }
 }
 

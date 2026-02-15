@@ -19,6 +19,7 @@ use crate::exec_cell::output_lines;
 use crate::exec_cell::spinner;
 use crate::exec_command::relativize_to_home;
 use crate::exec_command::strip_bash_lc_and_escape;
+use crate::i18n::tr;
 use crate::live_wrap::take_prefix_by_width;
 use crate::markdown::append_markdown;
 use crate::render::line_utils::line_to_static;
@@ -988,7 +989,7 @@ impl HistoryCell for TooltipHistoryCell {
             .max(1);
         let mut lines: Vec<Line<'static>> = Vec::new();
         append_markdown(
-            &format!("**Tip:** {}", self.tip),
+            &format!("**{}:** {}", tr("Tip", "提示"), self.tip),
             Some(wrap_width),
             &mut lines,
         );
@@ -1194,19 +1195,19 @@ impl HistoryCell for SessionHeaderHistoryCell {
         // Title line rendered inside the box: ">_ OpenAI Codex (vX)"
         let title_spans: Vec<Span<'static>> = vec![
             Span::from(">_ ").dim(),
-            Span::from("OpenAI Codex").bold(),
+            Span::from(tr("OpenAI Codex", "OpenAI Codex")).bold(),
             Span::from(" ").dim(),
             Span::from(format!("(v{})", self.version)).dim(),
         ];
 
         const CHANGE_MODEL_HINT_COMMAND: &str = "/model";
-        const CHANGE_MODEL_HINT_EXPLANATION: &str = " to change";
-        const DIR_LABEL: &str = "directory:";
-        let label_width = DIR_LABEL.len();
+        let change_model_hint_explanation = tr(" to change", " 可切换");
+        let dir_label = tr("directory:", "目录:");
+        let label_width = UnicodeWidthStr::width(dir_label);
 
         let model_label = format!(
             "{model_label:<label_width$}",
-            model_label = "model:",
+            model_label = tr("model:", "模型:"),
             label_width = label_width
         );
         let reasoning_label = self.reasoning_label();
@@ -1221,11 +1222,11 @@ impl HistoryCell for SessionHeaderHistoryCell {
             }
             spans.push("   ".dim());
             spans.push(CHANGE_MODEL_HINT_COMMAND.cyan());
-            spans.push(CHANGE_MODEL_HINT_EXPLANATION.dim());
+            spans.push(change_model_hint_explanation.dim());
             spans
         };
 
-        let dir_label = format!("{DIR_LABEL:<label_width$}");
+        let dir_label = format!("{dir_label:<label_width$}");
         let dir_prefix = format!("{dir_label} ");
         let dir_prefix_width = UnicodeWidthStr::width(dir_prefix.as_str());
         let dir_max_width = inner_width.saturating_sub(dir_prefix_width);

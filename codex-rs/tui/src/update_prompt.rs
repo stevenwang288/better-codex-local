@@ -10,8 +10,11 @@ use crate::selection_list::selection_option_row;
 use crate::tui::FrameRequester;
 use crate::tui::Tui;
 use crate::tui::TuiEvent;
+use crate::i18n::tr;
+use crate::i18n::use_zh_cn;
 use crate::update_action::UpdateAction;
 use crate::updates;
+use crate::version::CODEX_CLI_VERSION;
 use codex_core::config::Config;
 use color_eyre::Result;
 use crossterm::event::KeyCode;
@@ -108,7 +111,7 @@ impl UpdatePromptScreen {
         Self {
             request_frame,
             latest_version,
-            current_version: env!("CARGO_PKG_VERSION").to_string(),
+            current_version: CODEX_CLI_VERSION.to_string(),
             update_action,
             highlighted: UpdateSelection::UpdateNow,
             selection: None,
@@ -191,7 +194,7 @@ impl WidgetRef for &UpdatePromptScreen {
         column.push("");
         column.push(Line::from(vec![
             padded_emoji("  ✨").bold().cyan(),
-            "Update available!".bold(),
+            tr("Update available!", "有更新可用！").bold(),
             " ".into(),
             format!(
                 "{current} -> {latest}",
@@ -203,7 +206,7 @@ impl WidgetRef for &UpdatePromptScreen {
         column.push("");
         column.push(
             Line::from(vec![
-                "Release notes: ".dim(),
+                tr("Release notes: ", "更新说明：").dim(),
                 "https://github.com/openai/codex/releases/latest"
                     .dim()
                     .underlined(),
@@ -213,25 +216,33 @@ impl WidgetRef for &UpdatePromptScreen {
         column.push("");
         column.push(selection_option_row(
             0,
-            format!("Update now (runs `{update_command}`)"),
+            if use_zh_cn() {
+                format!("现在更新（将运行 `{update_command}`）")
+            } else {
+                format!("Update now (runs `{update_command}`)")
+            },
             self.highlighted == UpdateSelection::UpdateNow,
         ));
         column.push(selection_option_row(
             1,
-            "Skip".to_string(),
+            tr("Skip", "跳过").to_string(),
             self.highlighted == UpdateSelection::NotNow,
         ));
         column.push(selection_option_row(
             2,
-            "Skip until next version".to_string(),
+            if use_zh_cn() {
+                "下个版本前不再提示".to_string()
+            } else {
+                "Skip until next version".to_string()
+            },
             self.highlighted == UpdateSelection::DontRemind,
         ));
         column.push("");
         column.push(
             Line::from(vec![
-                "Press ".dim(),
+                tr("Press ", "按 ").dim(),
                 key_hint::plain(KeyCode::Enter).into(),
-                " to continue".dim(),
+                tr(" to continue", " 继续").dim(),
             ])
             .inset(Insets::tlbr(0, 2, 0, 0)),
         );

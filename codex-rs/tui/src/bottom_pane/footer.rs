@@ -32,6 +32,7 @@
 //! In short: `single_line_footer_layout` chooses *what* best fits, and the two
 //! render helpers choose whether to draw the chosen line or the default
 //! `FooterProps` mapping.
+use crate::i18n::tr;
 use crate::key_hint;
 use crate::key_hint::KeyBinding;
 use crate::render::line_utils::prefix_lines;
@@ -86,17 +87,20 @@ const FOOTER_CONTEXT_GAP_COLS: u16 = 1;
 
 impl CollaborationModeIndicator {
     fn label(self, show_cycle_hint: bool) -> String {
+        let cycle_hint = tr(MODE_CYCLE_HINT, "shift+tab 切换模式");
         let suffix = if show_cycle_hint {
-            format!(" ({MODE_CYCLE_HINT})")
+            format!(" ({cycle_hint})")
         } else {
             String::new()
         };
         match self {
-            CollaborationModeIndicator::Plan => format!("Plan mode{suffix}"),
+            CollaborationModeIndicator::Plan => format!("{}{suffix}", tr("Plan mode", "计划模式")),
             CollaborationModeIndicator::PairProgramming => {
-                format!("Pair Programming mode{suffix}")
+                format!("{}{suffix}", tr("Pair Programming mode", "结对编程模式"))
             }
-            CollaborationModeIndicator::Execute => format!("Execute mode{suffix}"),
+            CollaborationModeIndicator::Execute => {
+                format!("{}{suffix}", tr("Execute mode", "执行模式"))
+            }
         }
     }
 
@@ -256,15 +260,15 @@ fn left_side_line(
         SummaryHintKind::None => {}
         SummaryHintKind::Shortcuts => {
             line.push_span(key_hint::plain(KeyCode::Char('?')));
-            line.push_span(" for shortcuts".dim());
+            line.push_span(tr(" for shortcuts", " 查看快捷键").dim());
         }
         SummaryHintKind::QueueMessage => {
             line.push_span(key_hint::plain(KeyCode::Tab));
-            line.push_span(" to queue message".dim());
+            line.push_span(tr(" to queue message", " 将消息加入队列").dim());
         }
         SummaryHintKind::QueueShort => {
             line.push_span(key_hint::plain(KeyCode::Tab));
-            line.push_span(" to queue".dim());
+            line.push_span(tr(" to queue", " 加入队列").dim());
         }
     };
 
@@ -660,19 +664,23 @@ struct ShortcutsState {
 }
 
 fn quit_shortcut_reminder_line(key: KeyBinding) -> Line<'static> {
-    Line::from(vec![key.into(), " again to quit".into()]).dim()
+    Line::from(vec![key.into(), tr(" again to quit", " 再按一次退出").into()]).dim()
 }
 
 fn esc_hint_line(esc_backtrack_hint: bool) -> Line<'static> {
     let esc = key_hint::plain(KeyCode::Esc);
     if esc_backtrack_hint {
-        Line::from(vec![esc.into(), " again to edit previous message".into()]).dim()
+        Line::from(vec![
+            esc.into(),
+            tr(" again to edit previous message", " 再按一次可编辑上一条消息").into(),
+        ])
+        .dim()
     } else {
         Line::from(vec![
             esc.into(),
             " ".into(),
             esc.into(),
-            " to edit previous message".into(),
+            tr(" to edit previous message", " 可编辑上一条消息").into(),
         ])
         .dim()
     }
@@ -779,15 +787,17 @@ fn build_columns(entries: Vec<Line<'static>>) -> Vec<Line<'static>> {
 pub(crate) fn context_window_line(percent: Option<i64>, used_tokens: Option<i64>) -> Line<'static> {
     if let Some(percent) = percent {
         let percent = percent.clamp(0, 100);
-        return Line::from(vec![Span::from(format!("{percent}% context left")).dim()]);
+        let suffix = tr("% context left", "% 上下文剩余");
+        return Line::from(vec![Span::from(format!("{percent}{suffix}")).dim()]);
     }
 
     if let Some(tokens) = used_tokens {
         let used_fmt = format_tokens_compact(tokens);
-        return Line::from(vec![Span::from(format!("{used_fmt} used")).dim()]);
+        let suffix = tr(" used", " 已使用");
+        return Line::from(vec![Span::from(format!("{used_fmt}{suffix}")).dim()]);
     }
 
-    Line::from(vec![Span::from("100% context left").dim()])
+    Line::from(vec![Span::from(tr("100% context left", "100% 上下文剩余")).dim()])
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -850,22 +860,41 @@ impl ShortcutDescriptor {
         self.bindings.iter().find(|binding| binding.matches(state))
     }
 
+    fn localized_label(&self) -> &'static str {
+        match self.id {
+            ShortcutId::Commands => tr(" for commands", " 显示命令"),
+            ShortcutId::ShellCommands => tr(" for shell commands", " 执行 Shell 命令"),
+            ShortcutId::InsertNewline => tr(" for newline", " 插入换行"),
+            ShortcutId::QueueMessageTab => tr(" to queue message", " 将消息加入队列"),
+            ShortcutId::FilePaths => tr(" for file paths", " 选择文件路径"),
+            ShortcutId::PasteImage => tr(" to paste images", " 粘贴图片"),
+            ShortcutId::ExternalEditor => tr(" to edit in external editor", " 在外部编辑器中编辑"),
+            ShortcutId::EditPrevious => self.label,
+            ShortcutId::Quit => tr(" to exit", " 退出"),
+            ShortcutId::ShowTranscript => tr(" to view transcript", " 查看会话记录"),
+            ShortcutId::ChangeMode => tr(" to change mode", " 切换模式"),
+        }
+    }
+
     fn overlay_entry(&self, state: ShortcutsState) -> Option<Line<'static>> {
         let binding = self.binding_for(state)?;
         let mut line = Line::from(vec![self.prefix.into(), binding.key.into()]);
         match self.id {
             ShortcutId::EditPrevious => {
                 if state.esc_backtrack_hint {
-                    line.push_span(" again to edit previous message");
+                    line.push_span(tr(
+                        " again to edit previous message",
+                        " 再按一次可编辑上一条消息",
+                    ));
                 } else {
                     line.extend(vec![
                         " ".into(),
                         key_hint::plain(KeyCode::Esc).into(),
-                        " to edit previous message".into(),
+                        tr(" to edit previous message", " 可编辑上一条消息").into(),
                     ]);
                 }
             }
-            _ => line.push_span(self.label),
+            _ => line.push_span(self.localized_label()),
         };
         Some(line)
     }

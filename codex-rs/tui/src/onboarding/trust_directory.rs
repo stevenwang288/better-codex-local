@@ -14,6 +14,8 @@ use ratatui::widgets::Paragraph;
 use ratatui::widgets::WidgetRef;
 use ratatui::widgets::Wrap;
 
+use crate::i18n::tr;
+use crate::i18n::use_zh_cn;
 use crate::key_hint;
 use crate::onboarding::onboarding_screen::KeyboardHandler;
 use crate::onboarding::onboarding_screen::StepStateProvider;
@@ -46,23 +48,27 @@ impl WidgetRef for &TrustDirectoryWidget {
 
         column.push(Line::from(vec![
             "> ".into(),
-            "You are in ".bold(),
+            tr("You are in ", "你当前在 ").bold(),
             self.cwd.to_string_lossy().to_string().into(),
         ]));
         column.push("");
 
         column.push(
             Paragraph::new(
-                "Do you trust the contents of this directory? Working with untrusted contents comes with higher risk of prompt injection.".to_string(),
+                tr(
+                    "Do you trust the contents of this directory? Working with untrusted contents comes with higher risk of prompt injection.",
+                    "你是否信任此目录的内容？在不受信任的目录中工作会有更高的提示注入风险。",
+                )
+                .to_string(),
             )
-                .wrap(Wrap { trim: true })
-                .inset(Insets::tlbr(0, 2, 0, 0)),
+            .wrap(Wrap { trim: true })
+            .inset(Insets::tlbr(0, 2, 0, 0)),
         );
         column.push("");
 
         let options: Vec<(&str, TrustDirectorySelection)> = vec![
-            ("Yes, continue", TrustDirectorySelection::Trust),
-            ("No, quit", TrustDirectorySelection::Quit),
+            (tr("Yes, continue", "是，继续"), TrustDirectorySelection::Trust),
+            (tr("No, quit", "不，退出"), TrustDirectorySelection::Quit),
         ];
 
         for (idx, (text, selection)) in options.iter().enumerate() {
@@ -87,12 +93,12 @@ impl WidgetRef for &TrustDirectoryWidget {
 
         column.push(
             Line::from(vec![
-                "Press ".dim(),
+                tr("Press ", "按 ").dim(),
                 key_hint::plain(KeyCode::Enter).into(),
                 if self.show_windows_create_sandbox_hint {
-                    " to continue and create a sandbox...".dim()
+                    tr(" to continue and create a sandbox...", " 继续并创建沙箱...").dim()
                 } else {
-                    " to continue".dim()
+                    tr(" to continue", " 继续").dim()
                 },
             ])
             .inset(Insets::tlbr(0, 2, 0, 0)),
@@ -142,7 +148,11 @@ impl TrustDirectoryWidget {
             resolve_root_git_project_for_trust(&self.cwd).unwrap_or_else(|| self.cwd.clone());
         if let Err(e) = set_project_trust_level(&self.codex_home, &target, TrustLevel::Trusted) {
             tracing::error!("Failed to set project trusted: {e:?}");
-            self.error = Some(format!("Failed to set trust for {}: {e}", target.display()));
+            self.error = Some(if use_zh_cn() {
+                format!("无法设置信任目录 {}：{e}", target.display())
+            } else {
+                format!("Failed to set trust for {}: {e}", target.display())
+            });
         }
 
         self.selection = Some(TrustDirectorySelection::Trust);

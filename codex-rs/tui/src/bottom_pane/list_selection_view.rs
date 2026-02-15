@@ -15,6 +15,7 @@ use ratatui::widgets::Widget;
 use super::selection_popup_common::render_menu_surface;
 use super::selection_popup_common::wrap_styled_line;
 use crate::app_event_sender::AppEventSender;
+use crate::i18n::tr;
 use crate::key_hint::KeyBinding;
 use crate::render::renderable::ColumnRenderable;
 use crate::render::renderable::Renderable;
@@ -234,9 +235,9 @@ impl ListSelectionView {
                     let prefix = if is_selected { '›' } else { ' ' };
                     let name = item.name.as_str();
                     let marker = if item.is_current {
-                        " (current)"
+                        tr(" (current)", "（当前）")
                     } else if item.is_default {
-                        " (default)"
+                        tr(" (default)", "（默认）")
                     } else {
                         ""
                     };
@@ -415,6 +416,11 @@ impl BottomPaneView for ListSelectionView {
             }
             KeyEvent {
                 code: KeyCode::Esc, ..
+            }
+            | KeyEvent {
+                code: KeyCode::Left,
+                modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 self.on_ctrl_c();
             }
@@ -612,7 +618,7 @@ impl Renderable for ListSelectionView {
                     &rows,
                     &self.state,
                     render_area.height as usize,
-                    "no matches",
+                    tr("no matches", "无匹配项"),
                 ),
                 ColumnWidthMode::AutoAllRows => render_rows_stable_col_widths(
                     render_area,
@@ -620,7 +626,7 @@ impl Renderable for ListSelectionView {
                     &rows,
                     &self.state,
                     render_area.height as usize,
-                    "no matches",
+                    tr("no matches", "无匹配项"),
                 ),
                 ColumnWidthMode::Fixed => render_rows_with_col_width_mode(
                     render_area,
@@ -628,7 +634,7 @@ impl Renderable for ListSelectionView {
                     &rows,
                     &self.state,
                     render_area.height as usize,
-                    "no matches",
+                    tr("no matches", "无匹配项"),
                     ColumnWidthMode::Fixed,
                 ),
             };
@@ -681,6 +687,7 @@ mod tests {
     use crate::app_event::AppEvent;
     use crate::bottom_pane::popup_consts::standard_popup_hint_line;
     use crossterm::event::KeyCode;
+    use crossterm::event::KeyModifiers;
     use insta::assert_snapshot;
     use pretty_assertions::assert_eq;
     use ratatui::layout::Rect;
@@ -1124,6 +1131,24 @@ mod tests {
             before_col, after_col,
             "description column changed across scroll:\nbefore:\n{before_scroll}\nafter:\n{after_scroll}"
         );
+    }
+
+    #[test]
+    fn left_key_closes_selection_view() {
+        let (tx_raw, _rx) = unbounded_channel::<AppEvent>();
+        let tx = AppEventSender::new(tx_raw);
+
+        let mut view = ListSelectionView::new(
+            SelectionViewParams {
+                title: Some("Debug".to_string()),
+                items: make_scrolling_width_items(),
+                ..Default::default()
+            },
+            tx,
+        );
+
+        view.handle_key_event(KeyEvent::new(KeyCode::Left, KeyModifiers::NONE));
+        assert!(view.is_complete());
     }
 
     #[test]

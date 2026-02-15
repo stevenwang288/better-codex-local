@@ -11,6 +11,8 @@ use crate::bottom_pane::list_selection_view::SelectionViewParams;
 use crate::diff_render::DiffSummary;
 use crate::exec_command::strip_bash_lc_and_escape;
 use crate::history_cell;
+use crate::i18n::tr;
+use crate::i18n::use_zh_cn;
 use crate::key_hint;
 use crate::key_hint::KeyBinding;
 use crate::render::highlight::highlight_bash_to_lines;
@@ -119,22 +121,30 @@ impl ApprovalOverlay {
                     network_approval_context.as_ref(),
                 ),
                 network_approval_context.as_ref().map_or_else(
-                    || "Would you like to run the following command?".to_string(),
+                    || tr("Would you like to run the following command?", "是否允许运行以下命令？")
+                        .to_string(),
                     |network_approval_context| {
-                        format!(
-                            "Do you want to approve access to \"{}\"?",
-                            network_approval_context.host
-                        )
+                        let host = &network_approval_context.host;
+                        if use_zh_cn() {
+                            format!("是否要批准访问 \"{host}\"？")
+                        } else {
+                            format!("Do you want to approve access to \"{host}\"?")
+                        }
                     },
                 ),
             ),
             ApprovalVariant::ApplyPatch { .. } => (
                 patch_options(),
-                "Would you like to make the following edits?".to_string(),
+                tr("Would you like to make the following edits?", "是否允许进行以下修改？")
+                    .to_string(),
             ),
             ApprovalVariant::McpElicitation { server_name, .. } => (
                 elicitation_options(),
-                format!("{server_name} needs your approval."),
+                if use_zh_cn() {
+                    format!("{server_name} 需要你的批准。")
+                } else {
+                    format!("{server_name} needs your approval.")
+                },
             ),
         };
 
@@ -158,11 +168,11 @@ impl ApprovalOverlay {
 
         let params = SelectionViewParams {
             footer_hint: Some(Line::from(vec![
-                "Press ".into(),
+                tr("Press ", "按 ").into(),
                 key_hint::plain(KeyCode::Enter).into(),
-                " to confirm or ".into(),
+                tr(" to confirm or ", " 确认，或按 ").into(),
                 key_hint::plain(KeyCode::Esc).into(),
-                " to cancel".into(),
+                tr(" to cancel", " 取消").into(),
             ])),
             items,
             header,
@@ -391,7 +401,7 @@ impl From<ApprovalRequest> for ApprovalRequestState {
                     && !reason.is_empty()
                 {
                     header.push(Box::new(
-                        Paragraph::new(Line::from_iter(["Reason: ".into(), reason.italic()]))
+                        Paragraph::new(Line::from_iter([tr("Reason: ", "原因：").into(), reason.italic()]))
                             .wrap(Wrap { trim: false }),
                     ));
                     header.push(Box::new(Line::from("")));
@@ -471,19 +481,27 @@ fn exec_options(
     if network_approval_context.is_some() {
         return vec![
             ApprovalOption {
-                label: "Yes, just this once".to_string(),
+                label: tr("Yes, just this once", "是，仅本次").to_string(),
                 decision: ApprovalDecision::Review(ReviewDecision::Approved),
                 display_shortcut: None,
                 additional_shortcuts: vec![key_hint::plain(KeyCode::Char('y'))],
             },
             ApprovalOption {
-                label: "Yes, and allow this host for this session".to_string(),
+                label: tr(
+                    "Yes, and allow this host for this session",
+                    "是，本会话允许该主机",
+                )
+                .to_string(),
                 decision: ApprovalDecision::Review(ReviewDecision::ApprovedForSession),
                 display_shortcut: None,
                 additional_shortcuts: vec![key_hint::plain(KeyCode::Char('a'))],
             },
             ApprovalOption {
-                label: "No, and tell Codex what to do differently".to_string(),
+                label: tr(
+                    "No, and tell Codex what to do differently",
+                    "否，并告诉 Codex 该如何调整",
+                )
+                .to_string(),
                 decision: ApprovalDecision::Review(ReviewDecision::Abort),
                 display_shortcut: Some(key_hint::plain(KeyCode::Esc)),
                 additional_shortcuts: vec![key_hint::plain(KeyCode::Char('n'))],
@@ -492,7 +510,7 @@ fn exec_options(
     }
 
     vec![ApprovalOption {
-        label: "Yes, proceed".to_string(),
+        label: tr("Yes, proceed", "是，继续").to_string(),
         decision: ApprovalDecision::Review(ReviewDecision::Approved),
         display_shortcut: None,
         additional_shortcuts: vec![key_hint::plain(KeyCode::Char('y'))],
@@ -505,9 +523,11 @@ fn exec_options(
         }
 
         Some(ApprovalOption {
-            label: format!(
-                "Yes, and don't ask again for commands that start with `{rendered_prefix}`"
-            ),
+            label: if use_zh_cn() {
+                format!("是，命令以 `{rendered_prefix}` 开头时不再询问")
+            } else {
+                format!("Yes, and don't ask again for commands that start with `{rendered_prefix}`")
+            },
             decision: ApprovalDecision::Review(ReviewDecision::ApprovedExecpolicyAmendment {
                 proposed_execpolicy_amendment: prefix,
             }),
@@ -516,7 +536,11 @@ fn exec_options(
         })
     }))
     .chain([ApprovalOption {
-        label: "No, and tell Codex what to do differently".to_string(),
+        label: tr(
+            "No, and tell Codex what to do differently",
+            "否，并告诉 Codex 该如何调整",
+        )
+        .to_string(),
         decision: ApprovalDecision::Review(ReviewDecision::Abort),
         display_shortcut: Some(key_hint::plain(KeyCode::Esc)),
         additional_shortcuts: vec![key_hint::plain(KeyCode::Char('n'))],
@@ -527,19 +551,27 @@ fn exec_options(
 fn patch_options() -> Vec<ApprovalOption> {
     vec![
         ApprovalOption {
-            label: "Yes, proceed".to_string(),
+            label: tr("Yes, proceed", "是，继续").to_string(),
             decision: ApprovalDecision::Review(ReviewDecision::Approved),
             display_shortcut: None,
             additional_shortcuts: vec![key_hint::plain(KeyCode::Char('y'))],
         },
         ApprovalOption {
-            label: "Yes, and don't ask again for these files".to_string(),
+            label: tr(
+                "Yes, and don't ask again for these files",
+                "是，这些文件后续不再询问",
+            )
+            .to_string(),
             decision: ApprovalDecision::Review(ReviewDecision::ApprovedForSession),
             display_shortcut: None,
             additional_shortcuts: vec![key_hint::plain(KeyCode::Char('a'))],
         },
         ApprovalOption {
-            label: "No, and tell Codex what to do differently".to_string(),
+            label: tr(
+                "No, and tell Codex what to do differently",
+                "否，并告诉 Codex 该如何调整",
+            )
+            .to_string(),
             decision: ApprovalDecision::Review(ReviewDecision::Abort),
             display_shortcut: Some(key_hint::plain(KeyCode::Esc)),
             additional_shortcuts: vec![key_hint::plain(KeyCode::Char('n'))],
@@ -550,19 +582,19 @@ fn patch_options() -> Vec<ApprovalOption> {
 fn elicitation_options() -> Vec<ApprovalOption> {
     vec![
         ApprovalOption {
-            label: "Yes, provide the requested info".to_string(),
+            label: tr("Yes, provide the requested info", "是，提供所需信息").to_string(),
             decision: ApprovalDecision::McpElicitation(ElicitationAction::Accept),
             display_shortcut: None,
             additional_shortcuts: vec![key_hint::plain(KeyCode::Char('y'))],
         },
         ApprovalOption {
-            label: "No, but continue without it".to_string(),
+            label: tr("No, but continue without it", "否，但继续执行").to_string(),
             decision: ApprovalDecision::McpElicitation(ElicitationAction::Decline),
             display_shortcut: None,
             additional_shortcuts: vec![key_hint::plain(KeyCode::Char('n'))],
         },
         ApprovalOption {
-            label: "Cancel this request".to_string(),
+            label: tr("Cancel this request", "取消本次请求").to_string(),
             decision: ApprovalDecision::McpElicitation(ElicitationAction::Cancel),
             display_shortcut: Some(key_hint::plain(KeyCode::Esc)),
             additional_shortcuts: vec![key_hint::plain(KeyCode::Char('c'))],
@@ -703,9 +735,17 @@ mod tests {
         assert_eq!(
             labels,
             vec![
-                "Yes, just this once".to_string(),
-                "Yes, and allow this host for this session".to_string(),
-                "No, and tell Codex what to do differently".to_string(),
+                tr("Yes, just this once", "是，仅本次").to_string(),
+                tr(
+                    "Yes, and allow this host for this session",
+                    "是，本会话允许该主机",
+                )
+                .to_string(),
+                tr(
+                    "No, and tell Codex what to do differently",
+                    "否，并告诉 Codex 该如何调整",
+                )
+                .to_string(),
             ]
         );
     }
@@ -740,11 +780,17 @@ mod tests {
         assert!(
             rendered
                 .iter()
-                .any(|line| line.contains("Do you want to approve access to \"example.com\"?")),
+                .any(|line| line.contains(if use_zh_cn() {
+                    "是否要批准访问 \"example.com\"？"
+                } else {
+                    "Do you want to approve access to \"example.com\"?"
+                })),
             "expected network title to include host, got {rendered:?}"
         );
         assert!(
-            !rendered.iter().any(|line| line.contains("don't ask again")),
+            !rendered
+                .iter()
+                .any(|line| line.contains("don't ask again") || line.contains("不再询问")),
             "network prompt should not show execpolicy option, got {rendered:?}"
         );
     }

@@ -47,6 +47,7 @@ use crate::bottom_pane::popup_consts::MAX_POPUP_ROWS;
 use crate::bottom_pane::scroll_state::ScrollState;
 use crate::bottom_pane::selection_popup_common::render_rows_single_line;
 use crate::bottom_pane::selection_popup_common::truncate_line_with_ellipsis_if_overflow;
+use crate::i18n::tr;
 use crate::key_hint;
 use crate::render::Insets;
 use crate::render::RectExt;
@@ -60,6 +61,7 @@ const ITEM_NAME_TRUNCATE_LEN: usize = 21;
 
 /// Placeholder text shown in the search input when empty.
 const SEARCH_PLACEHOLDER: &str = "Type to search";
+const SEARCH_PLACEHOLDER_ZH: &str = "输入以搜索";
 
 /// Prefix displayed before the search query (mimics a command prompt).
 const SEARCH_PROMPT_PREFIX: &str = "> ";
@@ -541,7 +543,8 @@ impl Renderable for MultiSelectPicker {
         if search_area.height >= 2 {
             let [placeholder_area, input_area] =
                 Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).areas(search_area);
-            Line::from(SEARCH_PLACEHOLDER.dim()).render(placeholder_area, buf);
+            Line::from(tr(SEARCH_PLACEHOLDER, SEARCH_PLACEHOLDER_ZH).dim())
+                .render(placeholder_area, buf);
             let line = if self.search_query.is_empty() {
                 Line::from(vec![SEARCH_PROMPT_PREFIX.dim()])
             } else {
@@ -553,7 +556,7 @@ impl Renderable for MultiSelectPicker {
             line.render(input_area, buf);
         } else if search_area.height > 0 {
             let query_span = if self.search_query.is_empty() {
-                SEARCH_PLACEHOLDER.dim()
+                tr(SEARCH_PLACEHOLDER, SEARCH_PLACEHOLDER_ZH).dim()
             } else {
                 self.search_query.clone().into()
             };
@@ -573,7 +576,7 @@ impl Renderable for MultiSelectPicker {
                 &rows,
                 &self.state,
                 render_area.height as usize,
-                "no matches",
+                tr("no matches", "无匹配项"),
             );
         }
 
@@ -728,13 +731,13 @@ impl MultiSelectPickerBuilder {
 
         let instructions = if self.instructions.is_empty() {
             vec![
-                "Press ".into(),
+                tr("Press ", "按 ").into(),
                 key_hint::plain(KeyCode::Char(' ')).into(),
-                " to toggle; ".into(),
+                tr(" to toggle; ", " 切换；").into(),
                 key_hint::plain(KeyCode::Enter).into(),
-                " to confirm and close; ".into(),
+                tr(" to confirm and close; ", " 确认并关闭；").into(),
                 key_hint::plain(KeyCode::Esc).into(),
-                " to close".into(),
+                tr(" to close", " 关闭").into(),
             ]
         } else {
             self.instructions

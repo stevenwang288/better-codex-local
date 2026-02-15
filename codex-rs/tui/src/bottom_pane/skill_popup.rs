@@ -11,6 +11,7 @@ use super::popup_consts::MAX_POPUP_ROWS;
 use super::scroll_state::ScrollState;
 use super::selection_popup_common::GenericDisplayRow;
 use super::selection_popup_common::render_rows_single_line;
+use crate::i18n::tr;
 use crate::key_hint;
 use crate::render::Insets;
 use crate::render::RectExt;
@@ -188,7 +189,7 @@ impl WidgetRef for SkillPopup {
             &rows,
             &self.state,
             MAX_POPUP_ROWS,
-            "no matches",
+            tr("no matches", "无匹配项"),
         );
         if let Some(hint_area) = hint_area {
             let hint_area = Rect {
@@ -204,10 +205,10 @@ impl WidgetRef for SkillPopup {
 
 fn skill_popup_hint_line() -> Line<'static> {
     Line::from(vec![
-        "Press ".into(),
+        tr("Press ", "按 ").into(),
         key_hint::plain(KeyCode::Enter).into(),
-        " to insert or ".into(),
+        tr(" to insert or ", " 插入，或按 ").into(),
         key_hint::plain(KeyCode::Esc).into(),
-        " to close".into(),
+        tr(" to close", " 关闭").into(),
     ])
 }

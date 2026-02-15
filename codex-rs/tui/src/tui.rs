@@ -357,13 +357,9 @@ impl Tui {
         output
     }
 
-    /// Emit a desktop notification now if the terminal is unfocused.
+    /// Emit a desktop notification immediately.
     /// Returns true if a notification was posted.
     pub fn notify(&mut self, message: impl AsRef<str>) -> bool {
-        if self.terminal_focused.load(Ordering::Relaxed) {
-            return false;
-        }
-
         let Some(backend) = self.notification_backend.as_mut() else {
             return false;
         };

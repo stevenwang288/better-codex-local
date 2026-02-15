@@ -19,6 +19,7 @@ use crate::app_event::ConnectorsSnapshot;
 use crate::app_event_sender::AppEventSender;
 use crate::bottom_pane::queued_user_messages::QueuedUserMessages;
 use crate::bottom_pane::unified_exec_footer::UnifiedExecFooter;
+use crate::i18n::tr;
 use crate::key_hint;
 use crate::key_hint::KeyBinding;
 use crate::render::renderable::FlexRenderable;
@@ -347,8 +348,13 @@ impl BottomPane {
                     self.request_redraw_in(ChatComposer::recommended_paste_flush_delay());
                 }
             } else if view_complete {
-                self.view_stack.clear();
+                self.view_stack.pop();
                 self.on_active_view_complete();
+                if let Some(next_view) = self.view_stack.last()
+                    && next_view.is_in_paste_burst()
+                {
+                    self.request_redraw_in(ChatComposer::recommended_paste_flush_delay());
+                }
             } else if view_in_paste_burst {
                 self.request_redraw_in(ChatComposer::recommended_paste_flush_delay());
             }
@@ -414,7 +420,13 @@ impl BottomPane {
         if let Some(view) = self.view_stack.last_mut() {
             let needs_redraw = view.handle_paste(pasted);
             if view.is_complete() {
+                self.view_stack.pop();
                 self.on_active_view_complete();
+                if let Some(next_view) = self.view_stack.last()
+                    && next_view.is_in_paste_burst()
+                {
+                    self.request_redraw_in(ChatComposer::recommended_paste_flush_delay());
+                }
             }
             if needs_redraw {
                 self.request_redraw();
@@ -810,14 +822,16 @@ impl BottomPane {
         self.pause_status_timer_for_modal();
         self.set_composer_input_enabled(
             false,
-            Some("Answer the questions to continue.".to_string()),
+            Some(tr("Answer the questions to continue.", "请先回答问题再继续。").to_string()),
         );
         self.push_view(Box::new(modal));
     }
 
     fn on_active_view_complete(&mut self) {
-        self.resume_status_timer_after_modal();
-        self.set_composer_input_enabled(true, None);
+        if self.view_stack.is_empty() {
+            self.resume_status_timer_after_modal();
+            self.set_composer_input_enabled(true, None);
+        }
     }
 
     fn pause_status_timer_for_modal(&mut self) {
@@ -1490,6 +1504,56 @@ mod tests {
             matches!(rx.try_recv(), Ok(AppEvent::CodexOp(Op::Interrupt))),
             "expected Esc to send Op::Interrupt while a task is running"
         );
+    }
+
+    #[test]
+    fn esc_closes_only_top_view_in_stack() {
+        #[derive(Default)]
+        struct CloseOnEscView {
+            complete: bool,
+        }
+
+        impl Renderable for CloseOnEscView {
+            fn render(&self, _area: Rect, _buf: &mut Buffer) {}
+
+            fn desired_height(&self, _width: u16) -> u16 {
+                0
+            }
+        }
+
+        impl BottomPaneView for CloseOnEscView {
+            fn is_complete(&self) -> bool {
+                self.complete
+            }
+
+            fn on_ctrl_c(&mut self) -> CancellationEvent {
+                self.complete = true;
+                CancellationEvent::Handled
+            }
+        }
+
+        let (tx_raw, _rx) = unbounded_channel::<AppEvent>();
+        let tx = AppEventSender::new(tx_raw);
+        let mut pane = BottomPane::new(BottomPaneParams {
+            app_event_tx: tx,
+            frame_requester: FrameRequester::test_dummy(),
+            has_input_focus: true,
+            enhanced_keys_supported: false,
+            placeholder_text: "Ask Codex to do anything".to_string(),
+            disable_paste_burst: false,
+            animations_enabled: true,
+            skills: Some(Vec::new()),
+        });
+
+        pane.push_view(Box::new(CloseOnEscView::default()));
+        pane.push_view(Box::new(CloseOnEscView::default()));
+        assert_eq!(pane.view_stack.len(), 2);
+
+        pane.handle_key_event(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE));
+        assert_eq!(pane.view_stack.len(), 1);
+
+        pane.handle_key_event(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE));
+        assert_eq!(pane.view_stack.len(), 0);
     }
 
     #[test]

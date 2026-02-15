@@ -18,6 +18,7 @@ use crate::external_editor;
 use crate::file_search::FileSearchManager;
 use crate::history_cell;
 use crate::history_cell::HistoryCell;
+use crate::i18n::tr;
 #[cfg(not(debug_assertions))]
 use crate::history_cell::UpdateAvailableHistoryCell;
 use crate::model_migration::ModelMigrationOutcome;
@@ -206,7 +207,7 @@ fn emit_project_config_warnings(app_event_tx: &AppEventSender, config: &Config) 
                 .disabled_reason
                 .as_ref()
                 .map(ToString::to_string)
-                .unwrap_or_else(|| "config.toml is disabled.".to_string()),
+                .unwrap_or_else(|| tr("config.toml is disabled.", "config.toml 已禁用。").to_string()),
         ));
     }
 
@@ -214,9 +215,15 @@ fn emit_project_config_warnings(app_event_tx: &AppEventSender, config: &Config) 
         return;
     }
 
-    let mut message = concat!(
-        "Project config.toml files are disabled in the following folders. ",
-        "Settings in those files are ignored, but skills and exec policies still load.\n",
+    let mut message = tr(
+        concat!(
+            "Project config.toml files are disabled in the following folders. ",
+            "Settings in those files are ignored, but skills and exec policies still load.\n",
+        ),
+        concat!(
+            "以下目录中的 project config.toml 已被禁用。",
+            "这些文件中的设置会被忽略，但技能与执行策略仍会加载。\n",
+        ),
     )
     .to_string();
     for (index, (folder, reason)) in disabled_folders.iter().enumerate() {
@@ -816,7 +823,10 @@ impl App {
 
         if self.thread_event_channels.is_empty() {
             self.chat_widget
-                .add_info_message("No agents available yet.".to_string(), None);
+                .add_info_message(
+                    tr("No agents available yet.", "当前还没有可用代理。").to_string(),
+                    None,
+                );
             return;
         }
 
@@ -846,8 +856,8 @@ impl App {
             .collect();
 
         self.chat_widget.show_selection_view(SelectionViewParams {
-            title: Some("Agents".to_string()),
-            subtitle: Some("Select a thread to focus".to_string()),
+            title: Some(tr("Agents", "代理线程").to_string()),
+            subtitle: Some(tr("Select a thread to focus", "选择要聚焦的线程").to_string()),
             footer_hint: Some(standard_popup_hint_line()),
             items,
             initial_selected_idx,
@@ -1161,6 +1171,8 @@ impl App {
         let file_search = FileSearchManager::new(config.cwd.clone(), app_event_tx.clone());
         #[cfg(not(debug_assertions))]
         let upgrade_version = crate::updates::get_upgrade_version(&config);
+        let initial_runtime_approval_policy = config.permissions.approval_policy.value();
+        let initial_runtime_sandbox_policy = config.permissions.sandbox_policy.get().clone();
 
         let mut app = Self {
             server: thread_manager.clone(),
@@ -1172,8 +1184,8 @@ impl App {
             active_profile,
             cli_kv_overrides,
             harness_overrides,
-            runtime_approval_policy_override: None,
-            runtime_sandbox_policy_override: None,
+            runtime_approval_policy_override: Some(initial_runtime_approval_policy),
+            runtime_sandbox_policy_override: Some(initial_runtime_sandbox_policy),
             file_search,
             enhanced_keys_supported,
             transcript_cells: Vec::new(),
@@ -1541,21 +1553,29 @@ impl App {
                             }
                             Err(err) => {
                                 let path_display = path.display();
-                                self.chat_widget.add_error_message(format!(
-                                    "Failed to fork current session from {path_display}: {err}"
-                                ));
+                                self.chat_widget.add_error_message(if crate::i18n::use_zh_cn() {
+                                    format!("从 {path_display} 分叉当前会话失败：{err}")
+                                } else {
+                                    format!("Failed to fork current session from {path_display}: {err}")
+                                });
                             }
                         }
                     } else {
                         self.chat_widget.add_error_message(
-                            "A thread must contain at least one turn before it can be forked."
-                                .to_string(),
+                            tr(
+                                "A thread must contain at least one turn before it can be forked.",
+                                "线程至少需要一轮对话后才能分叉。",
+                            )
+                            .to_string(),
                         );
                     }
                 } else {
                     self.chat_widget.add_error_message(
-                        "A thread must contain at least one turn before it can be forked."
-                            .to_string(),
+                        tr(
+                            "A thread must contain at least one turn before it can be forked.",
+                            "线程至少需要一轮对话后才能分叉。",
+                        )
+                        .to_string(),
                     );
                 }
 
@@ -2693,8 +2713,11 @@ impl App {
             Err(external_editor::EditorError::MissingEditor) => {
                 self.chat_widget
                     .add_to_history(history_cell::new_error_event(
-                    "Cannot open external editor: set $VISUAL or $EDITOR before starting Codex."
-                        .to_string(),
+                    tr(
+                        "Cannot open external editor: set $VISUAL or $EDITOR before starting Codex.",
+                        "无法打开外部编辑器：请在启动 Codex 前设置 $VISUAL 或 $EDITOR。",
+                    )
+                    .to_string(),
                 ));
                 self.reset_external_editor_state(tui);
                 return;
@@ -2702,7 +2725,12 @@ impl App {
             Err(err) => {
                 self.chat_widget
                     .add_to_history(history_cell::new_error_event(format!(
-                        "Failed to open editor: {err}",
+                        "{}",
+                        if crate::i18n::use_zh_cn() {
+                            format!("打开编辑器失败：{err}")
+                        } else {
+                            format!("Failed to open editor: {err}")
+                        },
                     )));
                 self.reset_external_editor_state(tui);
                 return;
@@ -2726,7 +2754,12 @@ impl App {
             Err(err) => {
                 self.chat_widget
                     .add_to_history(history_cell::new_error_event(format!(
-                        "Failed to open editor: {err}",
+                        "{}",
+                        if crate::i18n::use_zh_cn() {
+                            format!("打开编辑器失败：{err}")
+                        } else {
+                            format!("Failed to open editor: {err}")
+                        },
                     )));
             }
         }
@@ -2737,7 +2770,7 @@ impl App {
         self.chat_widget
             .set_external_editor_state(ExternalEditorState::Requested);
         self.chat_widget.set_footer_hint_override(Some(vec![(
-            EXTERNAL_EDITOR_HINT.to_string(),
+            tr(EXTERNAL_EDITOR_HINT, "请在外部编辑器中保存并关闭后继续。").to_string(),
             String::new(),
         )]));
         tui.frame_requester().schedule_frame();
@@ -2748,6 +2781,20 @@ impl App {
             .set_external_editor_state(ExternalEditorState::Closed);
         self.chat_widget.set_footer_hint_override(None);
         tui.frame_requester().schedule_frame();
+    }
+
+    fn should_open_transcript_overlay_for_arrow_scroll(&self, key_event: &KeyEvent) -> bool {
+        matches!(
+            key_event,
+            KeyEvent {
+                code: KeyCode::Up | KeyCode::Down,
+                modifiers: crossterm::event::KeyModifiers::NONE,
+                kind: KeyEventKind::Press | KeyEventKind::Repeat,
+                ..
+            }
+        ) && self.overlay.is_none()
+            && self.chat_widget.is_normal_backtrack_mode()
+            && self.chat_widget.composer_is_empty()
     }
 
     async fn handle_key_event(&mut self, tui: &mut tui::Tui, key_event: KeyEvent) {
@@ -2806,6 +2853,18 @@ impl App {
             {
                 if let Some(selection) = self.confirm_backtrack_from_main() {
                     self.apply_backtrack_selection(tui, selection);
+                }
+            }
+            key_event if self.should_open_transcript_overlay_for_arrow_scroll(&key_event) => {
+                self.open_transcript_overlay(tui);
+                if let Err(err) = self
+                    .handle_backtrack_overlay_event(tui, TuiEvent::Key(key_event))
+                    .await
+                {
+                    tracing::warn!(
+                        error = %err,
+                        "failed to route main-view arrow key to transcript overlay"
+                    );
                 }
             }
             KeyEvent {
@@ -3160,6 +3219,43 @@ mod tests {
             rx,
             op_rx,
         )
+    }
+
+    #[tokio::test]
+    async fn main_view_arrow_scroll_shortcut_only_allows_plain_up_down() {
+        let mut app = make_test_app().await;
+
+        assert!(app.should_open_transcript_overlay_for_arrow_scroll(&KeyEvent::new(
+            KeyCode::Up,
+            KeyModifiers::NONE,
+        )));
+        assert!(app.should_open_transcript_overlay_for_arrow_scroll(&KeyEvent::new(
+            KeyCode::Down,
+            KeyModifiers::NONE,
+        )));
+
+        assert!(!app.should_open_transcript_overlay_for_arrow_scroll(&KeyEvent::new(
+            KeyCode::Up,
+            KeyModifiers::ALT,
+        )));
+
+        app.chat_widget
+            .set_composer_text("draft".to_string(), Vec::new(), Vec::new());
+        assert!(!app.should_open_transcript_overlay_for_arrow_scroll(&KeyEvent::new(
+            KeyCode::Up,
+            KeyModifiers::NONE,
+        )));
+    }
+
+    #[tokio::test]
+    async fn main_view_arrow_scroll_shortcut_is_disabled_when_overlay_is_open() {
+        let mut app = make_test_app().await;
+        app.overlay = Some(Overlay::new_transcript(Vec::new()));
+
+        assert!(!app.should_open_transcript_overlay_for_arrow_scroll(&KeyEvent::new(
+            KeyCode::Up,
+            KeyModifiers::NONE,
+        )));
     }
 
     fn test_otel_manager(config: &Config, model: &str) -> OtelManager {

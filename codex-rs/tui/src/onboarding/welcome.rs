@@ -14,6 +14,7 @@ use ratatui::widgets::Wrap;
 use std::cell::Cell;
 
 use crate::ascii_animation::AsciiAnimation;
+use crate::i18n::use_zh_cn;
 use crate::onboarding::onboarding_screen::KeyboardHandler;
 use crate::onboarding::onboarding_screen::StepStateProvider;
 use crate::tui::FrameRequester;
@@ -83,12 +84,21 @@ impl WidgetRef for &WelcomeWidget {
             lines.extend(frame.lines().map(Into::into));
             lines.push("".into());
         }
-        lines.push(Line::from(vec![
-            "  ".into(),
-            "Welcome to ".into(),
-            "Codex".bold(),
-            ", OpenAI's command-line coding agent".into(),
-        ]));
+        if use_zh_cn() {
+            lines.push(Line::from(vec![
+                "  ".into(),
+                "欢迎使用 ".into(),
+                "Codex".bold(),
+                "，OpenAI 的命令行编码助手".into(),
+            ]));
+        } else {
+            lines.push(Line::from(vec![
+                "  ".into(),
+                "Welcome to ".into(),
+                "Codex".bold(),
+                ", OpenAI's command-line coding agent".into(),
+            ]));
+        }
 
         Paragraph::new(lines)
             .wrap(Wrap { trim: false })

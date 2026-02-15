@@ -12,6 +12,7 @@ use ratatui::widgets::Widget;
 
 use crate::app_event::AppEvent;
 use crate::app_event_sender::AppEventSender;
+use crate::i18n::tr;
 use crate::key_hint;
 use crate::render::Insets;
 use crate::render::RectExt as _;
@@ -51,9 +52,13 @@ impl ExperimentalFeaturesView {
         app_event_tx: AppEventSender,
     ) -> Self {
         let mut header = ColumnRenderable::new();
-        header.push(Line::from("Experimental features".bold()));
+        header.push(Line::from(tr("Experimental features", "实验性功能").bold()));
         header.push(Line::from(
-            "Toggle experimental features. Changes are saved to config.toml.".dim(),
+            tr(
+                "Toggle experimental features. Changes are saved to config.toml.",
+                "开关实验性功能。变更会保存到 config.toml。",
+            )
+            .dim(),
         ));
 
         let mut view = Self {
@@ -260,7 +265,7 @@ impl Renderable for ExperimentalFeaturesView {
                 &rows,
                 &self.state,
                 MAX_POPUP_ROWS,
-                "  No experimental features available for now",
+                tr("  No experimental features available for now", "  当前没有可用的实验性功能"),
             );
         }
 
@@ -291,10 +296,10 @@ impl Renderable for ExperimentalFeaturesView {
 
 fn experimental_popup_hint_line() -> Line<'static> {
     Line::from(vec![
-        "Press ".into(),
+        tr("Press ", "按 ").into(),
         key_hint::plain(KeyCode::Char(' ')).into(),
-        " to select or ".into(),
+        tr(" to select or ", " 选择，或按 ").into(),
         key_hint::plain(KeyCode::Enter).into(),
-        " to save for next conversation".into(),
+        tr(" to save for next conversation", " 保存到下一次会话").into(),
     ])
 }

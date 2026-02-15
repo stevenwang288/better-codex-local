@@ -31,6 +31,11 @@ use std::io::IsTerminal;
 use std::path::PathBuf;
 use supports_color::Stream;
 
+const CODEX_CLI_VERSION: &str = match option_env!("CODEX_CLI_VERSION_OVERRIDE") {
+    Some(value) if !value.is_empty() => value,
+    _ => env!("CARGO_PKG_VERSION"),
+};
+
 #[cfg(target_os = "macos")]
 mod app_cmd;
 #[cfg(target_os = "macos")]
@@ -55,7 +60,7 @@ use codex_core::terminal::TerminalName;
 #[derive(Debug, Parser)]
 #[clap(
     author,
-    version,
+    version = CODEX_CLI_VERSION,
     // If a sub‑command is given, ignore requirements of the default args.
     subcommand_negates_reqs = true,
     // The executable is sometimes invoked via a platform‑specific name like

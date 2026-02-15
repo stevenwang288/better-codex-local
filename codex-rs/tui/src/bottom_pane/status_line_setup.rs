@@ -32,6 +32,7 @@ use crate::bottom_pane::CancellationEvent;
 use crate::bottom_pane::bottom_pane_view::BottomPaneView;
 use crate::bottom_pane::multi_select_picker::MultiSelectItem;
 use crate::bottom_pane::multi_select_picker::MultiSelectPicker;
+use crate::i18n::tr;
 use crate::render::renderable::Renderable;
 
 /// Available items that can be displayed in the status line.
@@ -97,32 +98,62 @@ impl StatusLineItem {
     /// User-visible description shown in the popup.
     pub(crate) fn description(&self) -> &'static str {
         match self {
-            StatusLineItem::ModelName => "Current model name",
-            StatusLineItem::ModelWithReasoning => "Current model name with reasoning level",
-            StatusLineItem::CurrentDir => "Current working directory",
-            StatusLineItem::ProjectRoot => "Project root directory (omitted when unavailable)",
-            StatusLineItem::GitBranch => "Current Git branch (omitted when unavailable)",
+            StatusLineItem::ModelName => tr("Current model name", "当前模型名称"),
+            StatusLineItem::ModelWithReasoning => {
+                tr("Current model name with reasoning level", "当前模型名称（含推理级别）")
+            }
+            StatusLineItem::CurrentDir => tr("Current working directory", "当前工作目录"),
+            StatusLineItem::ProjectRoot => {
+                tr("Project root directory (omitted when unavailable)", "项目根目录（不可用时省略）")
+            }
+            StatusLineItem::GitBranch => {
+                tr("Current Git branch (omitted when unavailable)", "当前 Git 分支（不可用时省略）")
+            }
             StatusLineItem::ContextRemaining => {
-                "Percentage of context window remaining (omitted when unknown)"
+                tr(
+                    "Percentage of context window remaining (omitted when unknown)",
+                    "上下文窗口剩余百分比（未知时省略）",
+                )
             }
             StatusLineItem::ContextUsed => {
-                "Percentage of context window used (omitted when unknown)"
+                tr(
+                    "Percentage of context window used (omitted when unknown)",
+                    "上下文窗口已用百分比（未知时省略）",
+                )
             }
             StatusLineItem::FiveHourLimit => {
-                "Remaining usage on 5-hour usage limit (omitted when unavailable)"
+                tr(
+                    "Remaining usage on 5-hour usage limit (omitted when unavailable)",
+                    "5 小时额度剩余（不可用时省略）",
+                )
             }
             StatusLineItem::WeeklyLimit => {
-                "Remaining usage on weekly usage limit (omitted when unavailable)"
+                tr(
+                    "Remaining usage on weekly usage limit (omitted when unavailable)",
+                    "周额度剩余（不可用时省略）",
+                )
             }
-            StatusLineItem::CodexVersion => "Codex application version",
+            StatusLineItem::CodexVersion => tr("Codex application version", "Codex 应用版本"),
             StatusLineItem::ContextWindowSize => {
-                "Total context window size in tokens (omitted when unknown)"
+                tr(
+                    "Total context window size in tokens (omitted when unknown)",
+                    "上下文窗口总大小（token，未知时省略）",
+                )
             }
-            StatusLineItem::UsedTokens => "Total tokens used in session (omitted when zero)",
-            StatusLineItem::TotalInputTokens => "Total input tokens used in session",
-            StatusLineItem::TotalOutputTokens => "Total output tokens used in session",
+            StatusLineItem::UsedTokens => {
+                tr("Total tokens used in session (omitted when zero)", "会话总用量（为 0 时省略）")
+            }
+            StatusLineItem::TotalInputTokens => {
+                tr("Total input tokens used in session", "会话输入总 token")
+            }
+            StatusLineItem::TotalOutputTokens => {
+                tr("Total output tokens used in session", "会话输出总 token")
+            }
             StatusLineItem::SessionId => {
-                "Current session identifier (omitted until session starts)"
+                tr(
+                    "Current session identifier (omitted until session starts)",
+                    "当前会话标识（会话开始后显示）",
+                )
             }
         }
     }
@@ -138,15 +169,15 @@ impl StatusLineItem {
             StatusLineItem::CurrentDir => "~/project/path",
             StatusLineItem::ProjectRoot => "~/project",
             StatusLineItem::GitBranch => "feat/awesome-feature",
-            StatusLineItem::ContextRemaining => "18% left",
-            StatusLineItem::ContextUsed => "82% used",
+            StatusLineItem::ContextRemaining => tr("18% left", "剩余 18%"),
+            StatusLineItem::ContextUsed => tr("82% used", "已用 82%"),
             StatusLineItem::FiveHourLimit => "5h 100%",
-            StatusLineItem::WeeklyLimit => "weekly 98%",
+            StatusLineItem::WeeklyLimit => tr("weekly 98%", "周额度 98%"),
             StatusLineItem::CodexVersion => "v0.93.0",
-            StatusLineItem::ContextWindowSize => "258K window",
-            StatusLineItem::UsedTokens => "27.3K used",
-            StatusLineItem::TotalInputTokens => "17,588 in",
-            StatusLineItem::TotalOutputTokens => "265 out",
+            StatusLineItem::ContextWindowSize => tr("258K window", "258K 窗口"),
+            StatusLineItem::UsedTokens => tr("27.3K used", "已用 27.3K"),
+            StatusLineItem::TotalInputTokens => tr("17,588 in", "输入 17,588"),
+            StatusLineItem::TotalOutputTokens => tr("265 out", "输出 265"),
             StatusLineItem::SessionId => "019c19bd-ceb6-73b0-adc8-8ec0397b85cf",
         }
     }
@@ -202,13 +233,16 @@ impl StatusLineSetupView {
 
         Self {
             picker: MultiSelectPicker::builder(
-                "Configure Status Line".to_string(),
-                Some("Select which items to display in the status line.".to_string()),
+                tr("Configure Status Line", "配置状态栏").to_string(),
+                Some(tr("Select which items to display in the status line.", "选择要在状态栏显示的项。").to_string()),
                 app_event_tx,
             )
             .instructions(vec![
-                "Use ↑↓ to navigate, ←→ to move, space to select, enter to confirm, esc to cancel."
-                    .into(),
+                tr(
+                    "Use ↑↓ to navigate, ←→ to move, space to select, enter to confirm, esc to cancel.",
+                    "↑↓ 导航，←→ 调整顺序，空格选择，回车确认，esc 取消。",
+                )
+                .into(),
             ])
             .items(items)
             .enable_ordering()

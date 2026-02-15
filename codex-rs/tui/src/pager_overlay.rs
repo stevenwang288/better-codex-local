@@ -21,6 +21,7 @@ use std::sync::Arc;
 use crate::chatwidget::ActiveCellTranscriptKey;
 use crate::history_cell::HistoryCell;
 use crate::history_cell::UserHistoryCell;
+use crate::i18n::tr;
 use crate::key_hint;
 use crate::key_hint::KeyBinding;
 use crate::render::Insets;
@@ -110,6 +111,19 @@ const PAGER_KEY_HINTS: &[(&[KeyBinding], &str)] = &[
     (&[KEY_HOME, KEY_END], "to jump"),
 ];
 
+fn localized_pager_hint(desc: &str) -> String {
+    match desc {
+        "to scroll" => tr("to scroll", "滚动").to_string(),
+        "to page" => tr("to page", "翻页").to_string(),
+        "to jump" => tr("to jump", "跳转").to_string(),
+        "to quit" => tr("to quit", "退出").to_string(),
+        "to edit prev" => tr("to edit prev", "编辑上一条").to_string(),
+        "to edit next" => tr("to edit next", "编辑下一条").to_string(),
+        "to edit message" => tr("to edit message", "编辑消息").to_string(),
+        _ => desc.to_string(),
+    }
+}
+
 // Render a single line of key hints from (key(s), description) pairs.
 fn render_key_hints(area: Rect, buf: &mut Buffer, pairs: &[(&[KeyBinding], &str)]) {
     let mut spans: Vec<Span<'static>> = vec![" ".into()];
@@ -125,7 +139,7 @@ fn render_key_hints(area: Rect, buf: &mut Buffer, pairs: &[(&[KeyBinding], &str)
             spans.push(Span::from(key));
         }
         spans.push(" ".into());
-        spans.push(Span::from(desc.to_string()));
+        spans.push(Span::from(localized_pager_hint(desc)));
         first = false;
     }
     Paragraph::new(vec![Line::from(spans).dim()]).render_ref(area, buf);

@@ -173,6 +173,7 @@ use crate::render::Insets;
 use crate::render::RectExt;
 use crate::render::renderable::Renderable;
 use crate::slash_command::SlashCommand;
+use crate::skills_helpers::localized_skill_description;
 use crate::style::user_message_style;
 use codex_protocol::custom_prompts::CustomPrompt;
 use codex_protocol::custom_prompts::PROMPTS_CMD_PREFIX;
@@ -191,6 +192,7 @@ use crate::bottom_pane::textarea::TextAreaState;
 use crate::clipboard_paste::normalize_pasted_path;
 use crate::clipboard_paste::pasted_image_format;
 use crate::history_cell;
+use crate::i18n::tr;
 use crate::ui_consts::LIVE_PREFIX_COLS;
 use codex_chatgpt::connectors;
 use codex_chatgpt::connectors::AppInfo;
@@ -3370,12 +3372,7 @@ fn skill_display_name(skill: &SkillMetadata) -> &str {
 }
 
 fn skill_description(skill: &SkillMetadata) -> Option<String> {
-    let description = skill
-        .interface
-        .as_ref()
-        .and_then(|interface| interface.short_description.as_deref())
-        .or(skill.short_description.as_deref())
-        .unwrap_or(&skill.description);
+    let description = localized_skill_description(skill);
     let trimmed = description.trim();
     (!trimmed.is_empty()).then(|| trimmed.to_string())
 }
@@ -3719,7 +3716,7 @@ impl ChatComposer {
             } else {
                 self.input_disabled_placeholder
                     .as_deref()
-                    .unwrap_or("Input disabled.")
+                    .unwrap_or(tr("Input disabled.", "输入已禁用。"))
                     .to_string()
             };
             if !textarea_rect.is_empty() {

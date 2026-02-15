@@ -37,6 +37,10 @@ use ratatui::widgets::WidgetRef;
 use ratatui::widgets::Wrap;
 use std::time::Duration;
 
+use crate::i18n::tr;
+use crate::i18n::use_zh_cn;
+use crate::key_hint;
+
 #[derive(Clone)]
 struct ProviderOption {
     name: String,
@@ -55,22 +59,31 @@ enum ProviderStatus {
 /// The `key` is matched case-insensitively.
 struct SelectOption {
     label: Line<'static>,
-    description: &'static str,
+    description_en: &'static str,
+    description_zh_cn: &'static str,
     key: KeyCode,
     provider_id: &'static str,
+}
+
+impl SelectOption {
+    fn description(&self) -> &'static str {
+        tr(self.description_en, self.description_zh_cn)
+    }
 }
 
 static OSS_SELECT_OPTIONS: LazyLock<Vec<SelectOption>> = LazyLock::new(|| {
     vec![
         SelectOption {
             label: Line::from(vec!["L".underlined(), "M Studio".into()]),
-            description: "Local LM Studio server (default port 1234)",
+            description_en: "Local LM Studio server (default port 1234)",
+            description_zh_cn: "本地 LM Studio 服务（默认端口 1234）",
             key: KeyCode::Char('l'),
             provider_id: LMSTUDIO_OSS_PROVIDER_ID,
         },
         SelectOption {
             label: Line::from(vec!["O".underlined(), "llama".into()]),
-            description: "Local Ollama server (Responses API, default port 11434)",
+            description_en: "Local Ollama server (Responses API, default port 11434)",
+            description_zh_cn: "本地 Ollama 服务（Responses API，默认端口 11434）",
             key: KeyCode::Char('o'),
             provider_id: OLLAMA_OSS_PROVIDER_ID,
         },
@@ -111,10 +124,14 @@ impl OssSelectionWidget<'_> {
         let mut contents: Vec<Line> = vec![
             Line::from(vec![
                 "? ".fg(Color::Blue),
-                "Select an open-source provider".bold(),
+                tr("Select an open-source provider", "选择开源模型提供方").bold(),
             ]),
             Line::from(""),
-            Line::from("  Choose which local AI server to use for your session."),
+            Line::from(if use_zh_cn() {
+                "  选择本次会话要使用的本地 AI 服务。"
+            } else {
+                "  Choose which local AI server to use for your session."
+            }),
             Line::from(""),
         ];
 
@@ -128,11 +145,26 @@ impl OssSelectionWidget<'_> {
             ]));
         }
         contents.push(Line::from(""));
-        contents.push(Line::from("  ● Running  ○ Not Running").add_modifier(Modifier::DIM));
+        contents.push(
+            Line::from(if use_zh_cn() {
+                "  ● 运行中  ○ 未运行"
+            } else {
+                "  ● Running  ○ Not Running"
+            })
+            .add_modifier(Modifier::DIM),
+        );
 
         contents.push(Line::from(""));
         contents.push(
-            Line::from("  Press Enter to select • Ctrl+C to exit").add_modifier(Modifier::DIM),
+            Line::from(vec![
+                Span::raw("  "),
+                Span::raw(tr("Press ", "按 ")).dim(),
+                key_hint::plain(KeyCode::Enter).into(),
+                Span::raw(tr(" to select • ", " 选择 • ")).dim(),
+                key_hint::ctrl(KeyCode::Char('c')).into(),
+                Span::raw(tr(" to exit", " 退出")).dim(),
+            ])
+            .add_modifier(Modifier::DIM),
         );
 
         let confirmation_prompt = Paragraph::new(contents).wrap(Wrap { trim: false });
@@ -258,7 +290,7 @@ impl WidgetRef for &OssSelectionWidget<'_> {
         ])
         .areas(response_chunk.inner(Margin::new(1, 0)));
 
-        Line::from("Select provider?").render(title_area, buf);
+        Line::from(tr("Select provider?", "选择提供方？")).render(title_area, buf);
 
         self.confirmation_prompt.clone().render(prompt_chunk, buf);
         let areas = Layout::horizontal(
@@ -273,7 +305,7 @@ impl WidgetRef for &OssSelectionWidget<'_> {
             line.render(*area, buf);
         }
 
-        Line::from(self.select_options[self.selected_option].description)
+        Line::from(self.select_options[self.selected_option].description())
             .style(Style::new().italic().fg(Color::DarkGray))
             .render(description_area.inner(Margin::new(1, 0)), buf);
     }

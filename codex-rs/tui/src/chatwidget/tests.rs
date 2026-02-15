@@ -12,6 +12,7 @@ use crate::bottom_pane::FeedbackAudience;
 use crate::bottom_pane::LocalImageAttachment;
 use crate::bottom_pane::MentionBinding;
 use crate::history_cell::UserHistoryCell;
+use crate::i18n::tr;
 use crate::test_backend::VT100Backend;
 use crate::tui::FrameRequester;
 use assert_matches::assert_matches;
@@ -1642,6 +1643,8 @@ async fn make_chatwidget_manual(
         pending_notification: None,
         quit_shortcut_expires_at: None,
         quit_shortcut_key: None,
+        ctrl_c_chain_count: 0,
+        ctrl_c_chain_expires_at: None,
         is_review_mode: false,
         pre_review_token_info: None,
         needs_final_message_separator: false,
@@ -2857,6 +2860,8 @@ async fn streaming_final_answer_keeps_task_running_state() {
     );
     assert_matches!(op_rx.try_recv(), Err(TryRecvError::Empty));
 
+    chat.handle_key_event(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::CONTROL));
+    chat.handle_key_event(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::CONTROL));
     chat.handle_key_event(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::CONTROL));
     match op_rx.try_recv() {
         Ok(Op::Interrupt) => {}
@@ -5454,7 +5459,7 @@ async fn permissions_selection_emits_history_cell_when_selection_changes() {
     );
     let rendered = lines_to_single_string(&cells[0]);
     assert!(
-        rendered.contains("Permissions updated to"),
+        rendered.contains(tr("Permissions updated to", "权限已更新为")),
         "expected permissions selection history message, got: {rendered}"
     );
 }
@@ -5551,7 +5556,7 @@ async fn permissions_selection_emits_history_cell_when_current_is_selected() {
     );
     let rendered = lines_to_single_string(&cells[0]);
     assert!(
-        rendered.contains("Permissions updated to"),
+        rendered.contains(tr("Permissions updated to", "权限已更新为")),
         "expected permissions update history message, got: {rendered}"
     );
 }
@@ -5617,7 +5622,8 @@ async fn permissions_full_access_history_cell_emitted_only_after_confirmation() 
         lines_to_single_string(&cells_after_confirmation[0])
     };
     assert!(
-        rendered.contains("Permissions updated to Full Access"),
+        rendered.contains(tr("Permissions updated to", "权限已更新为"))
+            && rendered.contains("Full Access"),
         "expected full access update history message, got: {rendered}"
     );
 }

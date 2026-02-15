@@ -10,6 +10,7 @@ use ratatui::style::Stylize;
 use ratatui::text::Line;
 use ratatui::widgets::Paragraph;
 
+use crate::i18n::tr;
 use crate::live_wrap::take_prefix_by_width;
 use crate::render::renderable::Renderable;
 
@@ -49,9 +50,11 @@ impl UnifiedExecFooter {
 
         let count = self.processes.len();
         let plural = if count == 1 { "" } else { "s" };
-        Some(format!(
+        let summary_en = format!(
             "{count} background terminal{plural} running · /ps to view · /clean to close"
-        ))
+        );
+        let summary_zh = format!("有 {count} 个后台终端在运行 · /ps 查看 · /clean 关闭");
+        Some(tr(&summary_en, &summary_zh).to_string())
     }
 
     fn render_lines(&self, width: u16) -> Vec<Line<'static>> {

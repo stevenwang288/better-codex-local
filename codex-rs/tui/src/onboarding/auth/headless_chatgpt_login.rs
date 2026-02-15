@@ -14,6 +14,7 @@ use std::sync::Arc;
 use std::sync::RwLock;
 use tokio::sync::Notify;
 
+use crate::i18n::tr;
 use crate::shimmer::shimmer_spans;
 use crate::tui::FrameRequester;
 
@@ -135,9 +136,9 @@ pub(super) fn render_device_code_login(
     state: &ContinueWithDeviceCodeState,
 ) {
     let banner = if state.device_code.is_some() {
-        "Finish signing in via your browser"
+        tr("Finish signing in via your browser", "请在浏览器中完成登录")
     } else {
-        "Preparing device code login"
+        tr("Preparing device code login", "正在准备设备码登录")
     };
 
     let mut spans = vec!["  ".into()];
@@ -154,7 +155,13 @@ pub(super) fn render_device_code_login(
     let mut lines = vec![spans.into(), "".into()];
 
     if let Some(device_code) = &state.device_code {
-        lines.push("  1. Open this link in your browser and sign in".into());
+        lines.push(
+            tr(
+                "  1. Open this link in your browser and sign in",
+                "  1. 在浏览器打开此链接并登录",
+            )
+            .into(),
+        );
         lines.push("".into());
         lines.push(Line::from(vec![
             "  ".into(),
@@ -162,7 +169,11 @@ pub(super) fn render_device_code_login(
         ]));
         lines.push("".into());
         lines.push(
-            "  2. Enter this one-time code after you are signed in (expires in 15 minutes)".into(),
+            tr(
+                "  2. Enter this one-time code after you are signed in (expires in 15 minutes)",
+                "  2. 登录后输入以下一次性代码（15 分钟内有效）",
+            )
+            .into(),
         );
         lines.push("".into());
         lines.push(Line::from(vec![
@@ -171,17 +182,24 @@ pub(super) fn render_device_code_login(
         ]));
         lines.push("".into());
         lines.push(
-            "  Device codes are a common phishing target. Never share this code."
+            tr(
+                "  Device codes are a common phishing target. Never share this code.",
+                "  设备码常被用于钓鱼，请勿向任何人分享此代码。",
+            )
                 .dim()
                 .into(),
         );
         lines.push("".into());
     } else {
-        lines.push("  Requesting a one-time code...".dim().into());
+        lines.push(
+            tr("  Requesting a one-time code...", "  正在请求一次性代码...")
+                .dim()
+                .into(),
+        );
         lines.push("".into());
     }
 
-    lines.push("  Press Esc to cancel".dim().into());
+    lines.push(tr("  Press Esc to cancel", "  按 Esc 取消").dim().into());
     Paragraph::new(lines)
         .wrap(Wrap { trim: false })
         .render(area, buf);

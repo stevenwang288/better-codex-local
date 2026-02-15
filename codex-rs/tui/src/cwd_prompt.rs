@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use crate::i18n::use_zh_cn;
 use crate::key_hint;
 use crate::render::Insets;
 use crate::render::renderable::ColumnRenderable;
@@ -179,46 +180,87 @@ impl WidgetRef for &CwdPromptScreen {
         Clear.render(area, buf);
         let mut column = ColumnRenderable::new();
 
-        let action_verb = self.action.verb();
-        let action_past = self.action.past_participle();
         let current_cwd = self.current_cwd.as_str();
         let session_cwd = self.session_cwd.as_str();
 
         column.push("");
-        column.push(Line::from(vec![
-            "Choose working directory to ".into(),
-            action_verb.bold(),
-            " this session".into(),
-        ]));
+        if use_zh_cn() {
+            let action = match self.action {
+                CwdPromptAction::Resume => "恢复",
+                CwdPromptAction::Fork => "分叉",
+            };
+            column.push(Line::from(vec![
+                "选择工作目录以".into(),
+                action.bold(),
+                "此会话".into(),
+            ]));
+        } else {
+            let action_verb = self.action.verb();
+            column.push(Line::from(vec![
+                "Choose working directory to ".into(),
+                action_verb.bold(),
+                " this session".into(),
+            ]));
+        }
         column.push("");
-        column.push(
-            Line::from(format!(
-                "Session = latest cwd recorded in the {action_past} session"
-            ))
-            .dim()
-            .inset(Insets::tlbr(0, 2, 0, 0)),
-        );
-        column.push(
-            Line::from("Current = your current working directory".dim())
+
+        if use_zh_cn() {
+            column.push(
+                Line::from("Session = 上次会话记录的最新工作目录".dim())
+                    .inset(Insets::tlbr(0, 2, 0, 0)),
+            );
+            column.push(
+                Line::from("Current = 你当前的工作目录".dim()).inset(Insets::tlbr(0, 2, 0, 0)),
+            );
+        } else {
+            let action_past = self.action.past_participle();
+            column.push(
+                Line::from(format!(
+                    "Session = latest cwd recorded in the {action_past} session"
+                ))
+                .dim()
                 .inset(Insets::tlbr(0, 2, 0, 0)),
-        );
+            );
+            column.push(
+                Line::from("Current = your current working directory".dim())
+                    .inset(Insets::tlbr(0, 2, 0, 0)),
+            );
+        }
+
         column.push("");
         column.push(selection_option_row(
             0,
-            format!("Use session directory ({session_cwd})"),
+            if use_zh_cn() {
+                format!("使用会话目录 ({session_cwd})")
+            } else {
+                format!("Use session directory ({session_cwd})")
+            },
             self.highlighted == CwdSelection::Session,
         ));
         column.push(selection_option_row(
             1,
-            format!("Use current directory ({current_cwd})"),
+            if use_zh_cn() {
+                format!("使用当前目录 ({current_cwd})")
+            } else {
+                format!("Use current directory ({current_cwd})")
+            },
             self.highlighted == CwdSelection::Current,
         ));
+
         column.push("");
         column.push(
             Line::from(vec![
-                "Press ".dim(),
+                if use_zh_cn() {
+                    "按 ".dim()
+                } else {
+                    "Press ".dim()
+                },
                 key_hint::plain(KeyCode::Enter).into(),
-                " to continue".dim(),
+                if use_zh_cn() {
+                    " 继续".dim()
+                } else {
+                    " to continue".dim()
+                },
             ])
             .inset(Insets::tlbr(0, 2, 0, 0)),
         );
