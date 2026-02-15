@@ -555,6 +555,15 @@ fn main() -> anyhow::Result<()> {
 }
 
 async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()> {
+    // Default this fork to Chinese UI unless the user explicitly overrides it.
+    // Users can still force English via `CODEX_UI_LANG=en`.
+    if std::env::var_os("CODEX_UI_LANG").is_none() {
+        // SAFETY: We set this once at process start before spawning any worker threads.
+        unsafe {
+            std::env::set_var("CODEX_UI_LANG", "zh-CN");
+        }
+    }
+
     let MultitoolCli {
         config_overrides: mut root_config_overrides,
         feature_toggles,

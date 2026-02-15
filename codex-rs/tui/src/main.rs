@@ -15,6 +15,15 @@ struct TopCli {
 
 fn main() -> anyhow::Result<()> {
     arg0_dispatch_or_else(|codex_linux_sandbox_exe| async move {
+        // Default this fork to Chinese UI unless the user explicitly overrides it.
+        // Users can still force English via `CODEX_UI_LANG=en`.
+        if std::env::var_os("CODEX_UI_LANG").is_none() {
+            // SAFETY: We set this once at process start before spawning any worker threads.
+            unsafe {
+                std::env::set_var("CODEX_UI_LANG", "zh-CN");
+            }
+        }
+
         let top_cli = TopCli::parse();
         let mut inner = top_cli.inner;
         inner
