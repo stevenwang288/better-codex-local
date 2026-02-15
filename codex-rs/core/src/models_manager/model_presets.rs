@@ -38,9 +38,9 @@ pub(crate) static PRESETS: Lazy<Vec<ModelPreset>> = Lazy::new(|| {
                 },
             ],
             supports_personality: true,
-            is_default: true,
+            is_default: false,
             upgrade: None,
-            show_in_picker: true,
+            show_in_picker: false,
             supported_in_api: true,
             input_modalities: default_input_modalities(),
         },
@@ -69,8 +69,8 @@ pub(crate) static PRESETS: Lazy<Vec<ModelPreset>> = Lazy::new(|| {
                 },
             ],
             supports_personality: true,
-            is_default: false,
-            upgrade: Some(gpt_53_codex_upgrade()),
+            is_default: true,
+            upgrade: None,
             show_in_picker: true,
             supported_in_api: true,
             input_modalities: default_input_modalities(),
@@ -362,31 +362,6 @@ pub(crate) static PRESETS: Lazy<Vec<ModelPreset>> = Lazy::new(|| {
         },
     ]
 });
-
-fn gpt_53_codex_upgrade() -> ModelUpgrade {
-    ModelUpgrade {
-        id: "gpt-5.3-codex".to_string(),
-        reasoning_effort_mapping: None,
-        migration_config_key: "gpt-5.3-codex".to_string(),
-        model_link: Some("https://openai.com/index/introducing-gpt-5-3-codex".to_string()),
-        upgrade_copy: Some(
-            "Codex is now powered by gpt-5.3-codex, our most capable agentic coding model yet. It is built for long-running, project-scale work and supports mid-turn steering with frequent progress updates."
-                .to_string(),
-        ),
-        migration_markdown: Some(
-            indoc! {r#"
-                **Codex just got an upgrade. Introducing {model_to}.**
-
-                Codex is now powered by {model_to}, our most capable agentic coding model yet. It's built for long-running, project-scale work, with mid-turn steering + frequent progress updates so you can collaborate while it runs (and it's faster too).
-
-                Learn more: https://openai.com/index/introducing-gpt-5-3-codex/
-
-                You can continue using {model_from} if you prefer.
-            "#}
-            .to_string(),
-        ),
-    }
-}
 
 fn gpt_52_codex_upgrade() -> ModelUpgrade {
     ModelUpgrade {
